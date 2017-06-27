@@ -10,7 +10,7 @@ from variables import activities
 def template(x):
     if 0<x<2*pi:
         return sin(x-1)
-    return 0
+    return -0.6 
 
 different=lambda x:cos(x*x)
     
@@ -35,7 +35,7 @@ def plot_three_cases():
     X_grand=arange(-1.5,0.5,0.1)
     plot([template(x) for x in X],label="original")
     plot([deformation(x,0,1,0,1) for x in X_grand], label="deformation")
-    title("Advanced")
+    title("Delay")
     legend()
     show()
     sft.compute_temporel_shift_parameters([template(x) for x in X], [deformation(x,0,1,0,1) for x in X_grand], plot=True)
@@ -58,7 +58,7 @@ def plot_three_cases():
     show()
     sft.compute_temporel_shift_parameters([template(x) for x in X], [different(x) for x in X_grand], plot=True)
     
-def exemple_speed_varaitions():
+def exemple_speed_variations():
     
     X=arange(-1,1,0.1)
     
@@ -104,8 +104,8 @@ def plot_all_example_path(template):
     list_name=["test_serie"+str(i) for i in range(1,7)]
     list_series=[load_list(l) for l in list_name]
     for s in list_series:
-        (w2,w3,score_min,rising_too_strong, tray_too_long)=sft.compute_temporel_shift_parameters(
-            template, s,plot=True)
+        (w2,w3,score_min,rising_too_strong, tray_too_long)=sft.compute_temporel_shift_parameters1(
+            template, s)#,plot=True)
         
 def compute_w2_w3_for_template_i_serie_j(i,j,start=10):
     template=load_list("USC-Activities\\{0}\\manual\\average_segment.csv".format(activities[i]))

@@ -12,7 +12,7 @@ This module focuses on the temporal shift characterization ie on the computation
 
 import matplotlib.pyplot as plt
 from numpy import array, inf
-from dba import DTWCumulMat, optimal_path, fastdtw
+from dba import DTWCumulMat, optimal_path, fastdtw, dtw
 from sklearn import linear_model
 from save import save_double_list
 import sys
@@ -27,6 +27,102 @@ def tray_too_long(x,y):
 #     nb_points_a_3=len([y[i] for i in range(len(y)) if y[i]<3])
 #     return x[nb_points_a_3]>4
     return True
+
+def compute_temporel_shift_parameters1(template, serie):
+    template=[template[i] for i in range(0, len(template),1)]
+    serie=[serie[i] for i in range(0, len(serie),1)]
+    
+    (cost,path,weight)=DTWCumulMat(medoid=template,s=serie)
+    (opt_path,weight_opt_path)=optimal_path(len(template), len(serie),path, weight)
+    
+    mat_weight_opt_path=[[max(weight_opt_path)*(1+5.0/100)] * (len(serie)+1) for _ in range(len(template)+1)]
+    
+    for k in range(len(weight_opt_path)):
+        mat_weight_opt_path[opt_path[k][1]][opt_path[k][0]]=weight_opt_path[k]
+
+#     (d,opt_path,cost_path)=fastdtw(template, serie)
+    opt_path=array(opt_path)
+        
+    #Data preparation
+    X=array(opt_path[:,0]).reshape(len(opt_path[:,0]),1)
+    y=opt_path[:,1]
+    
+    plt.matshow(cost)
+    plt.colorbar()
+    plt.scatter(X,y,color="k")
+    plt.xlabel("Series")
+    plt.ylabel("Template")
+    plt.show()
+    
+    ax1= plt.subplot2grid((3,4), (0,0), rowspan=2, colspan=2)
+    ax2= plt.subplot2grid((3,4), (0,2), rowspan=2, colspan=2)
+    ax3= plt.subplot2grid((3,4), (2,0), colspan=4)
+    
+    ax1.matshow(mat_weight_opt_path)
+    ax2.matshow(cost)
+    ax3.plot(serie)
+    ax3.plot(template)
+    plt.show
+    
+    plt.matshow(mat_weight_opt_path)
+    plt.colorbar()
+    plt.xlabel("Series")
+    plt.ylabel("Template")
+    plt.show()
+    
+    new_y=[y[i]*weight_opt_path[i] for i in range(len(y))]
+    new_X=[X[i]*weight_opt_path[i] for i in range(len(X))]
+    
+    ax1 = plt.subplot2grid((2, 3), (0, 0))
+    ax2 = plt.subplot2grid((2, 3), (0, 1))
+    ax3 = plt.subplot2grid((2, 3), (1, 0))
+    ax4 = plt.subplot2grid((2, 3), (1, 1))
+    ax5 = plt.subplot2grid((2, 3), (0, 2), rowspan=2)
+
+
+    ax1.scatter(X,y,color="b")
+    ax1.set_title("Without weight")
+    ax1.set_xlabel("Series")
+    ax1.set_ylabel("Template")
+    
+
+    ax2.scatter(X,new_y,color="b")
+    ax2.set_title("Weight on x")
+    ax2.set_xlabel("Series")
+    ax2.set_ylabel("Template")
+    
+
+    ax3.scatter(new_X,y,color="b")
+    ax3.set_title("Weight on y")
+    ax3.set_xlabel("Series")
+    ax3.set_ylabel("Template")
+    
+
+    ax4.scatter(new_X,new_y,color="b")
+    ax4.set_title("Weight on x and y")
+    ax4.set_xlabel("Series")
+    ax4.set_ylabel("Template")
+#     ax4.title("With weight on y and x")
+    
+
+    ax5.plot(template, label="Template")
+    ax5.plot(serie, label="Serie")
+    ax5.legend()
+    
+    reg = linear_model.LinearRegression()
+    reg.fit(new_X,new_y)
+    ax4.plot(new_X,reg.predict(new_X))
+    
+    w3=reg.coef_
+    
+    print("w2,w3,R=",-reg.intercept_/w3,w3,reg.score(new_X, new_y))
+    
+    plt.show()
+    
+    
+    
+    return (-reg.intercept_/w3,reg.coef_,reg.score(new_X, new_y),True,True)
+    
 
 def compute_temporel_shift_parameters(template, serie, plot=False):
     """
@@ -46,10 +142,10 @@ def compute_temporel_shift_parameters(template, serie, plot=False):
     reg_min = linear_model.LinearRegression()
     reg_select = linear_model.LinearRegression()
         
-#     (cost,path,weight)=DTWCumulMat(medoid=template,s=serie)
-#     (opt_path,weight_opt_path)=optimal_path(len(template), len(serie),path,weight)
+    (cost,path,weight)=DTWCumulMat(medoid=template,s=serie)
+    (opt_path,weight_opt_path)=optimal_path(len(template), len(serie),path,weight)
 
-    (d,opt_path,cost_path)=fastdtw(template, serie)
+#     (d,opt_path,weight_cost_path)=dtw(template, serie)
     opt_path=array(opt_path)
         
     #Data preparation
@@ -75,6 +171,8 @@ def compute_temporel_shift_parameters(template, serie, plot=False):
     plt.scatter(X,y,color="b")
     plt.scatter(new_X,new_y, color="r")
     plt.plot(new_X,reg.predict(new_X), color="k")
+    plt.xlabel("Series")
+    plt.ylabel("Template")
     
     (X_min,y_min)=(new_X,new_y)
     
@@ -109,6 +207,8 @@ def compute_temporel_shift_parameters(template, serie, plot=False):
     plt.scatter(new_X,new_y, color="r")
     plt.scatter(X_min,y_min, color="g")
     plt.plot(X_min,reg_min.predict(X_min), color="k")
+    plt.xlabel("Series")
+    plt.ylabel("Template")
     
     
     # Plot the series
@@ -116,6 +216,7 @@ def compute_temporel_shift_parameters(template, serie, plot=False):
     plt.plot(template, label="Template")
     plt.plot(serie, label="Serie")
     plt.legend()
+    plt.xlabel("Times")
     plt.show()
     
     if w2!=sys.maxint:
@@ -178,7 +279,7 @@ def remove_front(x,y,level):
             
     
 
-def plot_temporal_shift(template, serie, X, y, X_min, y_min, X_select, y_select, reg, reg_select):
+def plot_temporal_shift(template, serie, cost, X, y, X_min, y_min, X_select, y_select, reg, reg_select):
     """
     Plot the most useful informations of the temporal shift
     
@@ -200,12 +301,13 @@ def plot_temporal_shift(template, serie, X, y, X_min, y_min, X_select, y_select,
     """
     
 #     # Plot the cost matrix
-#     plt.matshow(cost)
-#     plt.colorbar()
-#     plt.show()
+
+
         
     # Plot the shift computation
     plt.subplot(131)
+    plt.matshow(cost)
+    plt.colorbar()
     plt.scatter(X,y,color="b")
     plt.scatter(X_min,y_min, color="r")
     plt.plot(X_min,reg.predict(X_min), color="k")
@@ -223,3 +325,5 @@ def plot_temporal_shift(template, serie, X, y, X_min, y_min, X_select, y_select,
     plt.plot(serie, label="Serie")
     plt.legend()
     plt.show()
+    
+
