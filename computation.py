@@ -559,6 +559,15 @@ def normalization(serie):
 def union(sgmtt1,sgmtt2):
     """
     Join two segmentation.
+    
+    Parameters
+    -----------
+    sgmtt1, sgmtt2: segmentation-like
+        the segmentation to be joined
+        
+    Return
+    -------
+    The parameter of the segmentation needed by the constructor of the Segmentation class
     """
     # TODO: recompute_segment, prunning_breaking_points !
     if sgmtt1=='':
@@ -567,6 +576,9 @@ def union(sgmtt1,sgmtt2):
         return sgmtt1.get_all()
     print(sgmtt1)
     print(sgmtt2)
+    absc1=sgmtt1.get_absc()
+    absc2=sgmtt2.get_absc()
+    absc=absc1+absc2
     serie=sgmtt1.get_serie()+sgmtt2.get_serie()
     order=0
     activity=""
@@ -583,7 +595,7 @@ def union(sgmtt1,sgmtt2):
         segments.append(s)
     average_segment=[]
     dispersion_segment=[]
-    return (serie,order,activity,sd_serie,breaking_points,segments,average_segment,dispersion_segment)
+    return (absc,serie,order,activity,sd_serie,breaking_points,segments,average_segment,dispersion_segment)
 
 # if __name__ == "__main__":
 #     import doctest
