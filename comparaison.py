@@ -13,6 +13,9 @@ from variables import activities
 from computation import normalization
 from load import get_filename, load_list
 
+#Indicates the number of class
+from variables import n_act
+
 def build_distance_vector(start,serie):
     """
     Build the distance vector of a sub-serie.
@@ -32,55 +35,34 @@ def build_distance_vector(start,serie):
         
     """
     distance=[]
-    for act in activities[:7]:
+    for act in activities[:n_act]:
         filename=get_filename(act, "manual")
         template=load_list(filename+"\\average_segment.csv")
         template_variance=load_list(filename+"\\dispersion_segment.csv")
-        longueur_fenetre=160
+        longueur_fenetre=int(len(template)*(1+20.0/100))
         normalized_serie=normalization(serie[start:start+longueur_fenetre])
         
         # Calcul de w2,w3
-        (w2,w3,R2,rts,ttl)=compute_temporel_shift_parameters(template, normalized_serie,True)
-        # If the rising is too strong that means that the pattern have begin before the current looked time.
-        # Thus, at the current time, the pattern could not be recongize even it is the good one.
-        # As a result, the param1 and param2 are save as "Not a Number".
-#         if rts:
-#             w0=0
-#             w1=0
-        
-        # If the tray is too long that means that at the current looked time, the pattern has still not begin
-        # A shift must be performed. This shift is possible only if the pattern could be contains in the window.
-        # So, it depends of the shift and the speed of the serie.
-        # TODO : For the moment, the parameters are initialized with "NaN". Indeed, at the current looked time,
-        #        the pattern have not started.
-        #        However, the pattern could be included in the looking window. An optimization of the algorithm
-        #        will consist of looking how to take that into consideration or shift at once.
-#         elif ttl:
-#             w0="NaN"
-#             w1="NaN"
-        
-        # Or on the contrary : we will try to know if there the template is included is the looking window.
-        # However the temporal shift can not be performed ! Indeed, the shift needs a regression of the 
-        # time serie. Or this regression is not feasible ! We have too few points, and it will requires
-        # a long time ! Furthermore, if other points are taken, a lot of informations will be lost 
-        # (all the peak, all the hollows ...)
-        
-        # We will only carry out the departure shift, not the speed one.
-#         else:
+        (w2,w3,dist)=compute_temporel_shift_parameters(template, normalized_serie)
         if w2<0:
-            half_shifted_serie=normalized_serie[-int(w2):-int(w2)+len(template)]
+            template2=template[-int(w2):]
+            template_variance2=template_variance[-int(w2):]
+            half_shifted_serie=normalized_serie[0:len(template2)]
         else:
-            half_shifted_serie=normalized_serie[0:len(template)]
-            
-        # The R2 parameter indicates the quality of the regression and the fiability of the computed w2,w3.
-        # TODO : Maybe, one could find a threshold criterion which will permit to set w0 and w1 at NaN.
-        #        For the moment, the R2 indicators is only added at the distance parameters.
-        (w0,w1)=compute_spatial_shift_parameters(template, template_variance, half_shifted_serie)
-
+            half_shifted_serie=normalized_serie[int(w2):int(w2)+len(template)]
+            template2=template
+            template_variance2=template_variance
+        try:
+            (w0,w1,dist2)=compute_spatial_shift_parameters(template2, template_variance2, half_shifted_serie)
+        except(ZeroDivisionError):
+            (w0,w1,dist2)=compute_spatial_shift_parameters(template, template_variance, normalized_serie[:len(template)])
+    
         distance.append(w0)
         distance.append(w1)
+        distance.append(dist2)
         distance.append(w2)
         distance.append(w3)
+        distance.append(dist)
 
     return distance
 
