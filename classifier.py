@@ -18,9 +18,9 @@ from sklearn import svm
 
 import numpy as np
 import matplotlib.pyplot as plt
-import load as ld
-from comparaison import build_distance_vector
-from variables import activities, n_act
+from storage import load as ld
+from comparison import build_distance_vector
+from utilities.variables import activities, n_act
 from time import time
 
 classifiers=[svm.SVC(),GaussianNB(),neighbors.KNeighborsClassifier(),tree.DecisionTreeClassifier(min_samples_leaf=5,max_depth=15)]

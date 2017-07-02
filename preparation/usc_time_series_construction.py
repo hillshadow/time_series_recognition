@@ -45,7 +45,7 @@ def prepare_data():
         data=data.reset_index(drop=True)
         data = data.drop(['activity', 'age', 'date', 'height', 'sensor_location', 'sensor_orientation', 'title', 'trial', 'version', 'weight'], 1)
         
-        print("SSQ computation")
+        print("SSQ csegmentation_construction")
         col=[]
         for i in range(len(data)):
                 col.append(data["sensor_readings"][i][0]**2+data["sensor_readings"][i][1]**2+data["sensor_readings"][i][2]**2)

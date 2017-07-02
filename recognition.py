@@ -1,10 +1,13 @@
 # coding: utf-8
 
-from segmentation import Segmentation
-import load as ld
-import save as sv
-from comparaison import compare, distance_optimum
-from computation import normalization
+"""
+Hightly depracted !
+"""
+from segmentation.segmentation import Segmentation
+from storage import load as ld
+from storage import save as sv
+from comparison import compare, distance_optimum
+from segmentation.segmentation_construction import normalization
 import matplotlib.pyplot as plt
 import os.path
 from statistics import mean, variance

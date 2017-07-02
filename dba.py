@@ -58,7 +58,7 @@ def initial_medoid(segments):
         # Computing sum of square for s1
         tmpSSQ=0
         for s2 in segments:
-            distance, path = fastdtw(s1, s2, dist=euclidean)
+            distance, cost, D, path, path_weight = fastdtw(s1, s2, dist=euclidean)
             tmpSSQ+=distance**2
         if tmpSSQ<minSSQ:
             medoid=s1
@@ -93,16 +93,25 @@ def DBA_update(medoid,segments):
  
 def DTW_multiple_alignment(medoid,s):
     """
-    Compute the shif for each segment according to the medoid.
+    Compute the shift for a segment according to the medoid.
+    
+    This is the first part of the DTW algorithm
     
     Parameters
     ----------
     medoid: list-like
     segments: list of list-like
         the bunch of segments
+        
+    Return
+    ------
+    alignment: list-like
+        the shift for the segment "s" w.r.t the medoid
+    path: list-like of tuplets
+        the optimal path between the two series
     """
     #Step 1: compute the accumulated cost matrix of DTW
-    d, cost, path = fastdtw(medoid,s)
+    (cost,path,weight) = DTWCumulMat(medoid,s)
     #Step 2 : store the elements associated with the medoid
     n = len(medoid)
     alignment=[[] for i in range(n)]
@@ -125,11 +134,23 @@ def DTWCumulMat(medoid, s):
     """
     Computes the cost/path matrix of a medoid/segment doublet.
     
+    This is the second part of the DTW algorithm
+    
     Parameters
     ----------
     medoid: list-like
     s: list-like
         a segment
+        
+    Return
+    ------
+    cost: matrix
+        the accrued weights
+    path:  list-like of tuplets
+        the optimal path between the two series
+    weight: matrix
+        the weights
+    
     """
     cost = [[0] * len(s) for _ in range(len(medoid))]
     weight= [[0] * len(s) for _ in range(len(medoid))]
@@ -170,6 +191,13 @@ def optimal_path(n,m, path, cost):
         the length of the medoid
     m: int-like
         the length of the segment
+    cost: matrix
+        the accrued weights
+    path:  list-like of tuplets
+        the optimal path between the two series
+        
+    Return
+    ------
     """
     the_path=[]
     path_cost=[]
@@ -206,183 +234,101 @@ def distanceTo(a,b):
     4
     """
     return (a-b)**2   
-        
 
+from numpy import array, zeros, argmin, inf, equal, ndim
+from scipy.spatial.distance import cdist
 
-
-
-def fastdtw(x, y, radius=1, dist=None):
-    ''' return the approximate distance between 2 time series with O(N)
-        time and memory complexity
-        Parameters
-        ----------
-        x : array_like
-            input array 1
-        y : array_like
-            input array 2
-        radius : int
-            size of neighborhood when expanding the path. A higher value will
-            increase the accuracy of the calculation but also increase time
-            and memory consumption. A radius equal to the size of x and y will
-            yield an exact dynamic time warping calculation.
-        dist : function or int
-            The method for calculating the distance between x[i] and y[j]. If
-            dist is an int of value p > 0, then the p-norm will be used. If
-            dist is a function then dist(x[i], y[j]) will be used. If dist is
-            None then abs(x[i] - y[j]) will be used.
-        Returns
-        -------
-        distance : float
-            the approximate distance between the 2 time series
-        path : list
-            list of indexes for the inputs x and y
-        Examples
-        --------
-        >>> import numpy as np
-        >>> import fastdtw
-        >>> x = np.array([1, 2, 3, 4, 5], dtype='float')
-        >>> y = np.array([2, 3, 4], dtype='float')
-        >>> fastdtw.fastdtw(x, y)
-        (2.0, [(0, 0), (1, 0), (2, 1), (3, 2), (4, 2)])
-    '''
-    x, y, dist = __prep_inputs(x, y, dist)
-    return __fastdtw(x, y, radius, dist)
-
-
-def __difference(a, b):
-    return abs(a - b)
-
-
-def __norm(p):
-    return lambda a, b: np.linalg.norm(a - b, p)
-
-
-def __fastdtw(x, y, radius, dist):
-    min_time_size = radius + 2
-
-    if len(x) < min_time_size or len(y) < min_time_size:
-        return dtw(x, y, dist=dist)
-
-    x_shrinked = __reduce_by_half(x)
-    y_shrinked = __reduce_by_half(y)
-    distance, path, cost = \
-        __fastdtw(x_shrinked, y_shrinked, radius=radius, dist=dist)
-    window = __expand_window(path, len(x), len(y), radius)
-    return __dtw(x, y, window, dist=dist)
-
-
-def __prep_inputs(x, y, dist):
-    x = np.asanyarray(x, dtype='float')
-    y = np.asanyarray(y, dtype='float')
-
-    if x.ndim == y.ndim > 1 and x.shape[1] != y.shape[1]:
-        raise ValueError('second dimension of x and y must be the same')
-    if isinstance(dist, numbers.Number) and dist <= 0:
-        raise ValueError('dist cannot be a negative integer')
-
-    if dist is None:
-        if x.ndim == 1:
-            dist = __difference
-        else: 
-            dist = __norm(p=1)
-    elif isinstance(dist, numbers.Number):
-        dist = __norm(p=dist)
-
-    return x, y, dist
-
-
-def dtw(x, y, dist=None):
-    ''' return the distance between 2 time series without approximation
-        Parameters
-        ----------
-        x : array_like
-            input array 1
-        y : array_like
-            input array 2
-        dist : function or int
-            The method for calculating the distance between x[i] and y[j]. If
-            dist is an int of value p > 0, then the p-norm will be used. If
-            dist is a function then dist(x[i], y[j]) will be used. If dist is
-            None then abs(x[i] - y[j]) will be used.
-        Returns
-        -------
-        distance : float
-            the approximate distance between the 2 time series
-        path : list
-            list of indexes for the inputs x and y
-        Examples
-        --------
-        >>> import numpy as np
-        >>> import fastdtw
-        >>> x = np.array([1, 2, 3, 4, 5], dtype='float')
-        >>> y = np.array([2, 3, 4], dtype='float')
-        >>> fastdtw.dtw(x, y)
-        (2.0, [(0, 0), (1, 0), (2, 1), (3, 2), (4, 2)])
-    '''
-    x, y, dist = __prep_inputs(x, y, dist)
-    return __dtw(x, y, None, dist)
-
-
-def __dtw(x, y, window, dist):
-    len_x, len_y = len(x), len(y)
-    if window is None:
-        window = [(i, j) for i in range(len_x) for j in range(len_y)]
-    window = ((i + 1, j + 1) for i, j in window)
-    D = defaultdict(lambda: (float('inf'),))
-    D[0, 0] = (0, 0, 0)
-    for i, j in window:
-        dt = dist(x[i-1], y[j-1])
-        D[i, j] = min((D[i-1, j][0]+dt, i-1, j), (D[i, j-1][0]+dt, i, j-1),
-                      (D[i-1, j-1][0]+dt, i-1, j-1), key=lambda a: a[0])
-    path = []
-    cost = []
-    i, j = len_x, len_y
-    while not (i == j == 0):
-        path.append((i-1, j-1))
-        cost.append(D[i-1, j-1][0])
-        i, j = D[i, j][1], D[i, j][2]
-    path.reverse()
-    cost.reverse()
-    return (D[len_x, len_y][0], path, cost)
-
-
-def __reduce_by_half(x):
-    return [(x[i] + x[1+i]) / 2 for i in range(0, len(x) - len(x) % 2, 2)]
-
-
-def __expand_window(path, len_x, len_y, radius):
-    path_ = set(path)
-    for i, j in path:
-        for a, b in ((i + a, j + b)
-                     for a in range(-radius, radius+1)
-                     for b in range(-radius, radius+1)):
-            path_.add((a, b))
-
-    window_ = set()
-    for i, j in path_:
-        for a, b in ((i * 2, j * 2), (i * 2, j * 2 + 1),
-                     (i * 2 + 1, j * 2), (i * 2 + 1, j * 2 + 1)):
-            window_.add((a, b))
-
-    window = []
-    start_j = 0
-    for i in range(0, len_x):
-        new_start_j = None
-        for j in range(start_j, len_y):
-            if (i, j) in window_:
-                window.append((i, j))
-                if new_start_j is None:
-                    new_start_j = j
-            elif new_start_j is not None:
-                break
-        start_j = new_start_j
-
-    return window
-        
+def dtw(x, y, dist=distanceTo):
+    """
+    Computes Dynamic Time Warping (DTW) of two sequences.
+    :param array x: N1*M array
+    :param array y: N2*M array
+    :param func dist: distance used as cost measure
+    Returns the minimum distance, the cost matrix, the accumulated cost matrix, and the wrap path.
+    """
+    assert len(x)
+    assert len(y)
+    r, c = len(x), len(y)
+    D0 = zeros((r + 1, c + 1))
+    D0[0, 1:] = inf
+    D0[1:, 0] = inf
+    D1 = D0[1:, 1:] # view
+    for i in range(r):
+        for j in range(c):
+            D1[i, j] = dist(x[i], y[j])
+    C = D1.copy()
+    for i in range(r):
+        for j in range(c):
+            D1[i, j] += min(D0[i, j], D0[i, j+1], D0[i+1, j])
+    if len(x)==1:
+        path = zeros(len(y)), range(len(y))
+    elif len(y) == 1:
+        path = range(len(x)), zeros(len(x))
+    else:
+        path = _traceback(D0)
+    path_weigth=[]
+    for i in range(len(path[0])):
+        path_weigth.append(C[path[0][i]][path[1][i]])
+    return D1[-1, -1] / sum(D1.shape), C, D1, path, path_weigth
 
         
 
-   
-    
-    
-    
+def fastdtw(x, y, dist=distanceTo):
+    """
+    Computes Dynamic Time Warping (DTW) of two sequences in a faster way.
+    Instead of iterating through each element and calculating each distance,
+    this uses the cdist function from scipy (https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.cdist.html)
+    :param array x: N1*M array
+    :param array y: N2*M array
+    :param string or func dist: distance parameter for cdist. When string is given, cdist uses optimized functions for the distance metrics.
+    If a string is passed, the distance function can be 'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski', 'yule'.
+    Returns the minimum distance, the cost matrix, the accumulated cost matrix, and the wrap path.
+    """
+    x=np.array(x)
+    y=np.array(y)
+    assert len(x)
+    assert len(y)
+    if ndim(x)==1:
+        x = x.reshape(-1,1)
+    if ndim(y)==1:
+        y = y.reshape(-1,1)
+    r, c = len(x), len(y)
+    D0 = zeros((r + 1, c + 1))
+    D0[0, 1:] = inf
+    D0[1:, 0] = inf
+    D1 = D0[1:, 1:]
+    D0[1:,1:] = cdist(x,y,dist)
+    C = D1.copy()
+    for i in range(r):
+        for j in range(c):
+            D1[i, j] += min(D0[i, j], D0[i, j+1], D0[i+1, j])
+    if len(x)==1:
+        path = zeros(len(y)), range(len(y))
+    elif len(y) == 1:
+        path = range(len(x)), zeros(len(x))
+    else:
+        path = _traceback(D0)
+        
+    path_weigth=[]
+    for i in range(len(path[0])):
+        path_weigth.append(C[path[0][i]][path[1][i]])
+        
+    return D1[-1, -1] / sum(D1.shape), C, D1, path, path_weigth
+
+def _traceback(D):
+    i, j = array(D.shape) - 2
+    p, q = [i], [j]
+    while ((i > 0) or (j > 0)):
+        tb = argmin((D[i, j], D[i, j+1], D[i+1, j]))
+        if (tb == 0):
+            i -= 1
+            j -= 1
+        elif (tb == 1):
+            i -= 1
+        else: # (tb == 2):
+            j -= 1
+        p.insert(0, i)
+        q.insert(0, j)
+    return array(p), array(q)
+
+     

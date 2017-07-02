@@ -1,0 +1,636 @@
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                         
+	%                                                                          PREAMBULE        
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                         
+	                                                                                 
+	\documentclass[a4,12pt]{article}                                                  
+	                                                                                 
+	%--- Packages génériques ---%                                                    
+	                                                                                 
+	\usepackage[francais]{babel}                                                     
+	\usepackage[utf8]{inputenc}                                                      
+	\usepackage[T1]{fontenc}                                                         
+	\usepackage[babel=true]{csquotes}                                                
+	\usepackage{amsmath}                                                             
+	\usepackage{amssymb}                                                             
+	\usepackage{float}                                                               
+	\usepackage{graphicx}                                                            
+	\usepackage{hyperref}                                                            
+	\usepackage{soul}                                                                
+	\usepackage{stmaryrd}                                                            
+	\usepackage{pifont}                                                              
+	\usepackage{verbatim}
+	                                                                                 
+	%--- Structure de la page ---%                                                   
+	                                                                                 
+	\usepackage{fancyheadings}                                                       
+	                                                                                 
+	\topmargin -1.5 cm                                                               
+	\oddsidemargin -0.5 cm                                                           
+	\evensidemargin -0.5 cm                                                          
+	\textwidth 17 cm                                                                 
+	\setlength{\headwidth}{\textwidth}                                               
+	\textheight 24 cm                                                                
+	\pagestyle{fancy}                                                                
+	\lhead[\fancyplain{}{\thepage}]{\fancyplain{}{\sl Forecsys}}                   
+	\chead[\fancyplain{}{{\sl }}]{\fancyplain{}{{Human Activities Recognition}}}           
+	\rhead[\fancyplain{}{}]{\fancyplain{}{Philippenko}}                      
+	\lfoot{\fancyplain{}{}}                                                          
+	\cfoot{\fancyplain{}{}}                                                          
+	\cfoot{\thepage }                                                                
+	\rfoot{\fancyplain{}{}}                                                         
+	
+	%--- Raccourcis commande ---%                                                    
+	                                                                                 
+	\newcommand{\R}{\mathbb{R}}                                                      
+	\newcommand{\N}{\mathbb{N}}                                                      
+	\newcommand{\A}{\mathbf{A}}                                                      
+	\newcommand{\B}{\mathbf{B}}                                                      
+	\newcommand{\C}{\mathbf{C}}                                                      
+	\newcommand{\D}{\mathbf{D}}                                                      
+	\newcommand{\ub}{\mathbf{u}}  
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                         
+	%                                                                      EN-TETE        
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+	
+	\title{\textbf{Forecsys \\ Mouvement Recognition}}
+	\author{                                                                         
+	\begin{tabular}{cc}                                                              
+	        \textsc{Constantin Philippenko	}
+	\end{tabular}}                                                                   
+	\date{\small \today}                                                             
+	                                                                                 
+	\makeatletter                                                                    
+	        \def\thetitle{\@title}                                                   
+	        \def\theauthor{\@author}                                                 
+	        \def\thedate{\@date}                                                     
+	\makeatother   
+	
+	\begin{document}  
+	
+	\maketitle 
+	
+	\newpage		
+	\renewcommand{\contentsname}{Sommaire}
+	\tableofcontents
+	\newpage
+	
+	The goal of this project is to determine the activity of a personn. In our situation :
+	\begin{itemize}
+		\item WalkingForward
+		\item WalkingLeft
+		\item WalkingRight
+		\item WalkingUpstairs
+		\item WalkingDownstairs
+		\item RunningForward
+		\item JumpingUp
+		\item Sitting
+		\item Standing
+		\item Sleeping
+		\item ElevatorUp
+		\item ElevatorDown
+	\end{itemize}
+
+	\medskip
+	
+	The project is splitted in few steps :
+	
+	\begin{itemize}
+		\item Data Preparation
+		\item Series segmentation : automatic or manual
+		\item Template Construction 
+		\item Series Recognition
+		\item Series Classification 
+		\item Recognition performance
+	\end{itemize}
+	
+	\medskip
+	
+	\section{Data Preparation}
+	
+	For each series we dispose of six series : three for the acceleration and three for the gyroscope.
+	In order to exploit this measure we compute the Sum of the Square values of the acceleration series:
+	
+	\[ SSQ_i = \sum Ax_i + Ay_i+ Az_i \]
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.3]{data/Series/ElevatorUp.png}
+		\caption{Serie example : Elevator Up}
+		\label{ElevatorUp}
+	\end{figure}
+	
+	We have $14$ subjects. For each subject and activities we have $10000$ points (splitted in five trials). At the present time, we use only one of them. In the future, we have to incorporate the thirteen remaining subject.
+	
+	The first trial of the first subject is used to compute the learning data and the last to compute the test data.
+	
+	\section{Segmentation}
+	
+	First of all one have to segment the data. The segmentation is needed to compute afterward the template of the classe.
+	
+	There is two approach to segment the SSQ series : manually or automatically.
+	
+	The automatic method works well for \textit{JumpingUp, RunningForward} and \textit{Walkings}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{USC-Activities/JumpingUp/automatic/breaking_points.png}
+		\caption{Jump Up}
+		\label{JumpUp}
+	\end{figure}
+	
+	But fails for \textit{Sitting, Standing, Sleeping}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{USC-Activities/Sleeping/automatic/breaking_points.png}
+		\caption{Jump Up}
+		\label{JumpUp}
+	\end{figure}
+	
+	But how to segmente Sitting, Sleeping or Standing ? 
+	
+	\subsection{The automatic method}
+		
+		The automatic method have been implemented using an idean developped by Christian Derquenne\cite{derquenne}. 
+		
+		We smooth the serie with a given order\footnote{that implies a parameter, this is a great unconveniant, furthermore this parameter could vary with the different activities}, then we differentiate it regarding to the smoothing order and we obtain a serie $D$. We vertically translate this new serie $D$ so as to obtain a serie with a null average. Then we consider that every time that for a point i we have :$D_{i}>0$ and $D_{i-1}<0$ that means that we are on breaking point.
+		
+		However, in general the automatically computed breaking points are too many and one has to select the most relevant one. So we built an algorithm which carryis out this selection using statistical properties.
+		
+	\subsection{Automatic vs Manual}
+	
+	The automatic method detect huge difference pattern. In this manner the following segmentation is quite coherent. However if we consider more points and look more carefully, one could notice that the peak  are going two by two. As a consequence a human will choose a segmentation which incorporate two peaks and not only one in each segment. This human segmentation have the advantage to improve the accuracy of the recognition. Indeed we will got a longer template, which contains more information. 
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{USC-Activities/WalkingForward/automatic/breaking_points.png}
+		\includegraphics[scale=0.5]{USC-Activities/WalkingForward/manual/breaking_points.png}
+		\caption{AutoVsManuWalkFor}
+		\label{Walking Forward}
+	\end{figure}
+		
+	\subsection{Segments computation}
+		
+		Once the breaking points are computed, one can compute the segments. Each segments is vertically normalized. This normalization is performed so as to allow a comparaison between them.
+		
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{USC-Activities/WalkingForward/automatic/segments_superposition.png}
+		\includegraphics[scale=0.5]{USC-Activities/WalkingForward/manual/segments_superposition.png}
+		\caption{AutoManuWalkForSegm}
+		\label{Walking Forward}
+	\end{figure}
+	
+	\section{Template Construction}
+	
+	There is two way to construct the template : juste averaging the segments or using DBA method developped by Petitjean\cite{petitjean} which average under time wraping. 
+	
+	\subsection{Averaging}
+		
+		This method just average all the segments. This method is atrociously bad ! It absolutely destroy the segment pattern ! On the following picture, one represents in blue the average segment and in red the associated variance. The variance is very hight ! This is due to the abscissa shift between the segment.
+		
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{report_pictures/segment_moyen.png}
+		\caption{averaging}
+		\label{Just averaging}
+	\end{figure}
+	
+		As a result, this method is not exploitable for the movement recognition.
+		
+	\subsection{The BDA method}
+		
+	The goal of this approach is to create average centroids that are consistent with the warping behavior of DTW. 
+	
+	DBA iteratively refines an average sequence $a$ and follows an expectation-maximization scheme:
+	\begin{enumerate}
+		\item Consider the average sequence $a$ fixed and find the best multiple alignment $M$ of the set of sequences $S$ with regard to $a$, by individually aligning each sequence of $S$ to $a$.
+		\item Now consider $M$ fixed and update $a$ as the best average sequence consistent with $M$.
+	\end{enumerate}
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{USC-Activities/RunningForward/manual/breaking_points.png}
+		\caption{Running Forward}
+		\label{RunningForward}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{USC-Activities/RunningForward/manual/segments_superposition.png}
+		\caption{Running Forward}
+		\label{RunningForwardAverage}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{USC-Activities/RunningForward/manual/average_segment.png}
+		\caption{Running Forward}
+		\label{RunningForwardAverage}
+	\end{figure}	
+	
+	Note :
+	\begin{itemize}
+		\item This process is quite long ! And more points there is in the template, longer the process is ! However the time duration of the algorithm s not a critical problem. Indeed this computation is done only once.
+		\item The DBA method requires a given number of iteration.
+		\item More points there is in the template, more accurate is the recognition : for instance walking right
+		\item Are the time series hightly varying with different individus ? One has to check !
+	\end{itemize}
+	
+	\subsection{The weight of the medoid}
+	
+	The variance has no longer any sense with the DBA method, so one has to compute an equivalent : the weight of the centroid. We use the idea developped by Goncharov\cite{goncharov} to compute the weight vector. 
+
+	
+	\section{Series Recognition}
+	
+	Let $S$ be a serie with unknown mouvements. We sweep this serie with a window having a width equal to the template's lenght.
+	
+	We compute the distance between the template and the sub-serie of $S$ included in the windows.
+	The distance is computed via a least square method :
+	
+	\[ d = \underset{w_0,w_1}{min} (t - w_1 s - w_0)^T B (t - w_1 s - w_0) = \underset{w_0,w_1}{min} \sum \frac{(t_i - w_1 x_i - w_0)^2}{\sigma_i^2} \]
+	
+	With : $B=diag(\frac{1}{\sigma_i^2})$, the variance matrix.
+	
+	
+	For the detection there is still some problems :
+	\begin{itemize}
+		\item How do we select the acceptance level ?
+		\item One should take into count the time wraping for the distance calculation : \[ \underset{w_0,w_1, w_2, w_3}{min} \sum (t_i - w_1 x_i(w_2 t + w_3) - w_0)^2 \]
+		\item The reconnaissance with a level return several points which could be the start of the segment :how do we select the points ? Those who are the most relevant ?
+	\end{itemize}
+	
+		\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{data/ImagesOfRecognition/JumpingUp_REC_JumpingUp.png}
+		\caption{JumpingUp REC JumpingUp}
+		\label{JumpingUp_REC_JumpingUp}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{data/ImagesOfRecognition/WalkingForward_REC_WalkingForward.png}
+		\caption{WalkingForward REC WalkingForward}
+		\label{JumpingUp_REC_JumpingUp}
+	\end{figure}
+	
+	\subsection{The template length problem} 
+	
+	Let suppose that we are looking to recognize in a serie which has a very long template\footnote{for instance ElevatorUp which template has a length of approximatively 2000 points}, an activity caracterized by a very small template\footnote{for example Jumping Up, which template has a length of 40}. Then, the likelihood to detect the short movement in a sub segment of the long one is very high. Thus, the algorithm  could return a bad result.
+	
+	For illustration :
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{data/ImagesOfRecognition/JumpingUp_REC_WalkingLeft.png}
+		\caption{JumpingUp REC WalkingLeft}
+		\label{JumpingUp_REC_JumpingUp}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{data/ImagesOfRecognition/WalkingForward_REC_ElevatorDown.png}
+		\caption{WalkingForward REC ElevatorDown}
+		\label{JumpingUp_REC_JumpingUp}
+	\end{figure}
+
+	
+	\subsection{The acceptance level problem}
+	
+	Let consider a template $t$ of an activity $a$.
+	One considers that a segment window $s$ of an other serie is also an elementary movement of $a$ if the distance $d$ is under a given level $l$ i.e $d<l$.
+	But how to choose this level ? Indeed :
+	\begin{itemize}
+		\item longer the template is, bigger the distance is
+		\item blurrer the template is, nearest are the distances between true prositive and false positive.
+	\end{itemize}
+
+	So, one thinks that the acceptance level has to change with the tested template. 
+	
+	For instance, with a level acceptance of $30$, one does not detect any movement in a EscalorUp activity.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{report_pictures/ElevatorDown_REC_ElevatorDown30.png}
+		\caption{JumpingUp REC JumpingUp}
+		\label{JumpingUp_REC_JumpingUp}
+	\end{figure}
+	
+	But with a level acceptance of $70$, one detects $72$ WalkingForward, $8$ WalkingLeft, ..., but we still not detect the elevator movement because the distance is around $30$ times biger.
+	
+	\section{Time Series comparaison}
+	
+	\subsection{The computation}
+	
+	To recognize and classify the time series, one has to be able to compare them.
+	
+	A time serie must be compared to all the pattern so as to detect which pattern it most looks like.
+	
+	For each template :
+	
+	Let $c=\{c_i\}_{ i \in \{1, ..., n\} }$ a series template of length $n$ and $s=\{s_i\}_{ i \in \{1, ..., m\} }$ a time series of length $m>n$.
+	
+	\underline{Goal} : Caracterize the distance between $c$ and $s$.
+	
+	\underline{Problem} : Spatio-temporel shift.
+	
+	\underline{Modelisation} : $c(t) = w_1 s(w_3 t + w_2) + w_0$
+	
+	Notes : $w_2=$departure $ \Rightarrow w_2 > 0 \Leftrightarrow $ advance !
+	
+	\subsubsection{Influence of $w_2$}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.35]{report_pictures/retard.png}
+		\caption{Delay}
+		\label{retard}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.35]{report_pictures/avance.png}
+		\caption{Advance}
+		\label{avance}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.35]{report_pictures/different.png}
+		\caption{Two different pattern : Oups there is a problem ?}
+		\label{different}
+	\end{figure}
+	
+	Via DTW, we compute the optimal path and the associated weight :
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{report_pictures/exemple_chemin.png}
+		\caption{An exemple of path}
+		\label{ex_dist_rep}
+	\end{figure}
+	
+	We denote the optimal path by : $\Pi = \{(p_{s_i}, p_{c_j})\}_{i,j \in \{1, ..., n\} \times \{1, ..., m\} }$
+	
+	The path has a length $p$.
+	
+	The weight of the optimal path: $R = \{ \rho_i \}_{i \in \{1, ..., p\} } = \{ (c_{k_i} - s_{k_j})^2 \}_{k \in \{1, ..., p\} }$ with $(k_i,k_j)$ the k-eme couples of $\Pi$
+	
+	We try to compute $w_2$ (the delay) and $w_3$ (the speed) with this data.
+	
+	The goal is to get a linear regression : $d = a \times x + b$ of this path. 
+	
+	If there is no temporel shift between the time series and the template we should obtain $a=1$ and $b=0$.
+	
+	We define $w_2$ and $w_3$ by : $w_3=a$ and $w_2$ defines by : $w_3 \times (-w_2) + b = 0 \Leftrightarrow w_2 = \frac{a}{b}$
+	
+	\subsubsection{Two ways to compute the parameters : with the weight and without}
+	
+	With the weight, the problem is to minimize the following sum :
+	
+	\[ \underset{w_2,w_3}{min} \sum_{k=0}^p ( \rho_i \times c_{k_i} - ( w_3 \times \rho_i \times s_{k_j} + w_2) )^2 \]
+	
+	On the following picture : the first graphe of the first line corresponds to : $\{(p_{s_i}, p_{c_j})\}_{i,j \in {1, ..., n} \times {1, ..., m} }$, the second of the first line to $\{(p_{s_i}, \rho_i \times p_{c_j})\}_{i,j \in \{1, ..., n\} \times \{1, ..., m\} }$. One the second line : $\{(\rho_i \times p_{s_i}, p_{c_j})\}_{i,j \in \{1, ..., n\} \times \{1, ..., m\} }$ and $\{(\rho_i \times p_{s_i}, \rho_i \times p_{c_j})\}_{i,j \in \{1, ..., n\} \times \{1, ..., m\} }$.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.35]{report_pictures/poids.png}
+		\caption{Weight of the optimal path}
+		\label{reg_poids}
+	\end{figure}	
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.35]{report_pictures/regression_poids.png}
+		\caption{An exemple of the path multiplide by the weight : here $w_2=-1.31$ and $w_3=0.75$	}
+		\label{reg_poids}
+	\end{figure}	
+	
+	Without the weight : we try to found the best linear regression without regarding the try and the peack.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.35]{report_pictures/regression_sans_poids.png}
+		\caption{An exemple of the path regression : here $w_2=24$ and $w_3=0.57$}
+		\label{reg_sans_poids}
+	\end{figure}
+	
+	\subsection{How to speed up the computation}
+	
+	There is some ideas :
+	
+	\begin{itemize}
+		\item take less points for instance one out of three point.
+		\item implements the fastdtw
+		\item stochastic gradient descent : choose which points we should consider and which we should not.
+	\end{itemize}
+	
+	\subsection{Problem}
+	
+	\begin{itemize}
+		\item which method for computing $w_2$ and $w_3$
+		\item problem with dtw ? cf different
+		\item difference with fastdtw and dtw ?
+	\end{itemize}
+	
+	\section{The classification}
+	
+	The choice of the threshold is a very hard problem which could not be solved ! 
+	
+	So we decided to change our distance function and to return no more a scalar but a vector characterizing the reconnaissance depending of all the templates.
+	
+	Then, one will build a classifier which will discriminate all the classes.
+	
+	Problem
+	\begin{itemize}
+		\item How to choice the relevant features ? Those which will permit to create a efficient partition ?
+	\end{itemize}
+	
+	\subsection{Watching the template one after one}
+	
+	Firstly we thought about computing a distance for each template. That is to say : one choose the activity he wants to recognize and compare the associated template and the serie to be recognized. The vector distance was built with regards to the points distance distribution.
+
+	For illustration :
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{report_pictures/exemple_distance_repartition.png}
+		\caption{How the distance repartion would looked like}
+		\label{ex_dist_rep}
+	\end{figure}
+	
+	From this histogram, we built the distance vector, using the three amplitude, the largeur of the bar and the variance of the amplitude.
+	
+	With this distance vector we obtain the following data distributions. On the following pictures, the white match to \textit{WalkingForward}, and the black to all the other classes.
+	
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{report_pictures/DistanceComposants/Amplitude0Amplitude1.png}
+		\caption{Components $1$ and $2$ of the distance vector for WalkingForward}
+		\label{dist_components}
+	\end{figure}
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{report_pictures//DistanceComposants/Amplitude0Amplitude2.png}
+		\caption{Components $1$ and $3$ of the distance vector for WalkingForward}
+		\label{dist_components}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{report_pictures/DistanceComposants/Amplitude0Largeur.png}
+		\caption{Components $1$ and $3$ of the distance vector for WalkingForward}
+		\label{dist_components}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{report_pictures/DistanceComposants/Amplitude0Variance.png}
+		\caption{Components $1$ and $4$ of the distance vector for WalkingForward}
+		\label{dist_components}
+	\end{figure}
+	
+	Clearly, this results are not exploitable. 
+	
+	\subsection{Building a distance vector regarding to all the templates}
+	
+	The previous idea was not really relevant. Indeed, it considered the templates independantly. In reality, if one wants to construct an adequat distance vector, one has to add a comparaison of the serie recognition for each template. Thus, one has to construct a vector with a dimension multiple of the number of activities\footnote{here 12}.
+	
+	Therefore, one defines\footnote{When we would have solve the distance minimisation considering the time wrapping the vector would be in $\R^{48}$} the following distance vector between two series of equal length :
+	
+	\[ d=[w_{1,1}, w_{0,1}, w_{1,2}, ..., w_{0,12}] \in \R^{24} \]
+	
+	With this distance vector we obtain the following data distributions. On the following graph with have make a disctinction between each classe.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{data/DistanceVectorComponents/3_11.png}
+		\caption{Components $3$ and $11$ of the distance vector ie $w_{1,2}$ and $w_{1,6}$}
+		\label{dist_components}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{data/DistanceVectorComponents/1_13.png}
+		\caption{Components $1$ and $13$ of the distance vector}
+		\label{dist_components}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{data/DistanceVectorComponents/13_15.png}
+		\caption{Components $13$ and $15$ of the distance vector}
+		\label{dist_components}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{data/DistanceVectorComponents/4_15.png}
+		\caption{Components $4$ and $15$ of the distance vector}
+		\label{dist_components}
+	\end{figure}
+	
+	This approach give at least exploitable results. One now has to measure and then improve the accuracy of the classification.
+	
+	Notes:
+	\begin{itemize}
+		\item Should we consider a dual classification\footnote{Jumping or not Jumping, Walking or not walking ...} or a multi-classe classification ?
+		\item Which classifier should we use ?
+	\end{itemize}
+	
+	\section{Test of the recognition}
+	
+	We have measured the accuracy of the recognition using a cross-vaidation and a hold-out-validation for four different classifiers : 
+	
+	\begin{itemize}
+		\item Support Vector Machine
+		\item Gaussain Naive Bayesian
+		\item k-Nearest Neighbors
+		\item Decision Tree
+	\end{itemize}
+	
+	How to read the following graphics : 
+	
+	The vertical axis corresponds to the activities one wants to recognize. The horizontal axis corresponds to the activities recognized by the algorithm.
+	
+	For instance the value at the coordinate $(1,2)$ match with the percentage of serie recognized as the second activity while in reality it is the first activity. 
+	
+	Thus, the detection would be perfect if for every data set, one would obtain a diagonal matrix.
+	
+	\begin{figure}[H]
+		\centering
+			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.5]{report_pictures/auto_recognition_svm.png}
+  			\end{minipage} \hfill
+   			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.5]{report_pictures/recognition_svm.png}
+   			\end{minipage}
+		\caption{Auto and Hold-Out Validation for SVM}
+		\label{svm}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.5]{report_pictures/auto_recognition_gnb.png}
+  			\end{minipage} \hfill
+   			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.5]{report_pictures/recognition_gnb.png}
+   			\end{minipage}
+		\caption{Auto and Hold-Out Validation for Gaussian Naive Bayes}
+		\label{gnb}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.5]{report_pictures/auto_recognition_knn.png}
+  			\end{minipage} \hfill
+   			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.5]{report_pictures/recognition_knn.png}
+   			\end{minipage}
+		\caption{Auto and Hold-Out Validation for k-nearest Neighbors}
+		\label{knn}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.5]{report_pictures/auto_recognition_dtc.png}
+  			\end{minipage} \hfill
+   			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.5]{report_pictures/recognition_dtc.png}
+   			\end{minipage}
+		\caption{Auto and Hold-Out Validation for Decision Tree}
+		\label{dtc}
+	\end{figure}
+	
+	
+	\subsection{Construction of the data test}
+	
+		We manually segment the last try of each ativities of the first subject. Then a generate a file which summurize the information to recognize : which movemement could we detect, and how many we could.
+		
+		For each of this test serie we try to recognize each pattern and then we compare to the reality.
+		
+	\section{TODO}
+	
+	\subsection{19/06/2017}
+
+	What at this date, we have to do :
+	\begin{itemize}
+		\item measure the classification problem
+		\item write unittest for each module so as to check the behavior of our algorithms
+		\item buil a bigger series library including all the individus
+		\item solve the remaning distance computation problem
+		\item carryies out classifier comparaison so as to take the best one for our problem
+		\item write the code documentation
+	\end{itemize}		
+
+	\bibliographystyle{plain}
+	\bibliography{biblio}	
+	
+	\end{document}

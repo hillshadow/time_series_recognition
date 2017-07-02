@@ -1,0 +1,634 @@
+\documentclass[11pt, sans, handout]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[export]{adjustbox}
+\usetheme{JuanLesPins}
+
+\newcommand{\R}{\mathbb{R}} 
+\newcommand{\Un}{\mathbb{1}} 
+
+\title[Présentation]{Time series recognition}
+\subtitle[\ldots]{Forecsys}
+\author[Dupont]{Constantin Philippenko}
+\institute[MIPT]{Moscou}
+\date{\today}
+
+\addtobeamertemplate{footline}{\insertframenumber/\inserttotalframenumber}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}
+	\frametitle{Goal of the project}
+	
+	\begin{alertblock}{Objectif}
+	Recognize the activity of workers looking on their acceleration movements. That implies a time series recognition study.
+	\end{alertblock}
+	
+	\begin{block}{Two part}
+	\begin{itemize}
+		\item Modelisation of the problem :
+			\begin{enumerate}
+				\item Data Preparation
+				\item Data Segmentation
+				\item Template Construction
+			\end{enumerate}
+		\item Model exploitation	
+			\begin{enumerate}
+				\item Time Series Comparaison
+				\item Time Series Classification
+				\item Time Series Recognition
+			\end{enumerate}			 
+	\end{itemize}
+	
+	\end{block}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Data Preparation} 
+	
+	 \begin{alertblock}{Goal}
+
+		Make data the most informative and make them easy to manipulate
+
+	\end{alertblock}
+	
+	\begin{columns}
+	
+	\begin{column}{0.5\textwidth}
+		\begin{block}{The dataset}
+
+		\begin{itemize}
+			\item 14 subjects
+			\item 12 activities
+			\item 5 trials for each subject
+			\item acceleration (unity $g$)
+			\item gyroscope (unity $dps$)
+		\end{itemize}
+
+		\end{block}
+	\end{column}
+	
+	\begin{column}{0.5\textwidth}
+		\begin{block}{The activities}
+		
+		\begin{itemize}
+			\item WalkingForward, WalkingLeft, WalkingRight
+			\item WalkingDownstairs, WalkingUpstairs
+			\item RunningForward
+			\item Jumping
+			\item Sitting, Standing, Sleeping
+			\item EscalatorUp, EscalatorDown
+		\end{itemize}
+		
+		\end{block}
+	\end{column}
+	
+	\end{columns}
+	
+\end{frame}
+
+\begin{frame}
+\frametitle{Data Preparation}
+
+	We focus on the acceleration and compute the sum of square of the three axis components :
+	
+	\[ SSQ = \sum A_x^2 + A_y^2 + A_z^2 \]
+	
+	where $A_t$ is the acceleration corresponding to the t-axes.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.15]{data/Series/ElevatorUp.png}
+		\caption{Serie example : Elevator Up}
+		\label{ElevatorUp}
+	\end{figure}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Segmentation}
+	 
+	 \begin{alertblock}{Goal}
+
+		Find the elementary time series of each activities. The segmentation is needed to compute afterward the template of the classe. There is a strong correlation between the segmentation quality and the template quality, and so on the recognition quality.
+
+	\end{alertblock}
+	
+	\begin{block}{Two ways to segment the time series}
+	\begin{itemize}
+		\item automatically
+		\item manually
+	\end{itemize}
+	\end{block}
+
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Segmentation}
+	\framesubtitle{Automatically}
+	
+	The automatic method have been implemented using an idea developped by Christian Derquenne\cite{derquenne}. 
+	
+	This method is based on the smoothing and the differenciation of the time series, before carrying out a breaking points selection.	
+	
+	\begin{figure}
+	\includegraphics[scale=0.4,center]{USC-Activities/JumpingUp/automatic/breaking_points.png}
+	\caption{Automatic segmentation of JumpingUp}
+	\end{figure}
+
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Segmentation}
+	\framesubtitle{Automatically}
+	
+	\begin{figure}
+	\includegraphics[scale=0.4,center]{USC-Activities/Sleeping/automatic/breaking_points.png}
+	\caption{Automatic segment of Sleeping}
+	\end{figure}
+	
+	\begin{exampleblock}{Problem}
+	How to segment Sleeping, Standing or Sitting ?
+	\end{exampleblock}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Segmentation}
+	\framesubtitle{Manually}
+	
+	If we consider more points and look more carefully, one could notice that the peak  are going two by two. As a consequence a human will choose a segmentation which incorporate two peaks and not only one in each segment. 
+		
+	\begin{figure}
+      \includegraphics[scale=0.4,center]{USC-Activities/WalkingForward/automatic/breaking_points.png}
+      \caption{Automatic segmentation of WalkingForward}
+    \end{figure}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Segmentation}
+	\framesubtitle{Manually}
+	
+	\begin{figure} 	
+      \includegraphics[scale=0.4,center]{USC-Activities/WalkingForward/manual/breaking_points.png}
+      \caption{Manually segmentation of WalkingForward}
+	\end{figure}
+	
+	\begin{exampleblock}{Advantage}
+	Improve the accuracy of the recognition, indeed we will got a longer template, which contains more information.
+	\end{exampleblock}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Segmentation}
+	\framesubtitle{Results}
+	
+ Each segments is vertically normalized. This normalization is performed so as to allow a comparaison between them.
+ 
+ 	\[ s_{normalized_i} = \frac{s_i - average(s)}{dispersion(s)} \]
+		
+	\begin{figure}
+   	\begin{minipage}[c]{.46\linewidth}
+      \includegraphics[scale=0.16,center]{USC-Activities/WalkingForward/automatic/segments_superposition.png}
+      \caption{Automatic segmentation of WalkingForward}
+   	\end{minipage} \hfill
+   	\begin{minipage}[c]{.46\linewidth}
+      \includegraphics[scale=0.16,center]{USC-Activities/WalkingForward/manual/segments_superposition.png}
+      \caption{Manually segmentation of WalkingForward}
+  	\end{minipage}
+	\end{figure}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Template Construction}
+	
+	\begin{alertblock}{Goal}
+
+		Build a model of the elementary movement of our activities. Then, one will compare the template and a sub-segment of the time series to be recognized.
+
+	\end{alertblock}
+	
+	\begin{block}{How to construct the template}
+	There is two way to construct the template : 
+	\begin{itemize}
+		\item averaging the segments
+		\item using DBA method developped by Petitjean\cite{petitjean} which average under time wraping.
+	\end{itemize}	  
+	\end{block}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Template Construction}
+	\framesubtitle{The averaging method : an awful solution}
+	
+	On the following picture, one represents in blue the average segment and in red the associated variance. The variance is very hight ! This is due to the abscissa shift between the segment.
+	
+	\begin{figure}
+	\includegraphics[scale=0.4, center]{report_pictures/segment_moyen.png}
+	\caption{Building the template by averaging the segments}
+	\end{figure}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Template Construction}
+	\framesubtitle{The averaging method : an awful solution}
+	
+	\begin{alertblock}{As a result :}
+	This method is not exploitable !
+	\end{alertblock}
+
+\end{frame}
+
+\begin{frame}
+	\frametitle{Template Construction}
+	\framesubtitle{The DBA method}
+	
+	\begin{alertblock}{Goal}
+		Create average centroids that are consistent with the warping behavior of DTW. 
+	\end{alertblock}
+	
+	DBA iteratively refines an average sequence $a$ and follows an expectation-maximization scheme:
+	\begin{enumerate}
+		\item Consider the average sequence $a$ fixed and find the best multiple alignment $M$ of the set of sequences $S$ with regard to $a$, by individually aligning each sequence of $S$ to $a$.
+		\item Now consider $M$ fixed and update $a$ as the best average sequence consistent with $M$.
+	\end{enumerate}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Template Construction}
+	\framesubtitle{DBA Results}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.4,center]{USC-Activities/RunningForward/manual/breaking_points.png}
+		\caption{The manaul segmentation of RunningForward}
+		\label{bp_RF}
+	\end{figure}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Template Construction}
+	\framesubtitle{DBA Results}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.4,center]{USC-Activities/RunningForward/manual/segments_superposition.png}
+		\caption{Segments superposition for RunningForward}
+		\label{seg_sup_RF}
+	\end{figure}
+   
+\end{frame}
+
+\begin{frame}
+	\frametitle{Template Construction}
+	\framesubtitle{DBA Results}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.55,center]{data/AverageSegments/RunningForward.png}
+		\caption{Average segment for RunningForward}
+		\label{av_seg_RF}
+	\end{figure}
+   
+\end{frame}
+
+\begin{frame}
+	\frametitle{Template Construction}
+	\framesubtitle{The weight of the medoid}
+	
+	\begin{exampleblock}{Notes}
+	The variance has no longer any sense with the DBA method, so one has to compute an equivalent : the weight of the centroid. We use the idea developped by Goncharov\cite{goncharov} to compute the weight vector. The weight was in red on the previous picture.
+	\end{exampleblock}
+	
+\end{frame}
+
+
+\begin{frame}
+	\frametitle{Time Series Comparaison}
+	\framesubtitle{Presentation of the model}
+	
+	\begin{alertblock}{Justification}
+	To recognize and classify the time series, one has to be able to compare them. A time serie must be compared to all the patterns at the same time so as to detect to which pattern it most looks like.
+	\end{alertblock}
+	
+	So, one has to first compare a segment and a template and to characterize how near they are.
+	
+	\begin{exampleblock}
+	It's a hard problem, and it's the core of our work. The problem have not at the present time been entirely solved.
+	\end{exampleblock}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Comparaison}
+	\framesubtitle{Caracterize the distance between a template $c$ and a segment $s$}
+
+	Let $c=\{c_i\}_{ i \in \{1, ..., n\} }$ a series template of length $n$ and $s=\{s_i\}_{ i \in \{1, ..., m\} }$ a time series of length $m>n$.
+
+	
+	\begin{alertblock}{Problem}
+	Spatio-temporel shift.
+	\end{alertblock}
+	
+	\begin{block}{Modelisation}
+	$c(t) = w_1 s(w_3 t + w_2) + w_0$
+	\end{block}	
+	
+	\begin{exampleblock}{Notes}
+	\begin{itemize}
+	 \item $w0$ is the \textit{floor} of the segment compared to the pattern
+	 \item $w1$ is the amplitude ratio
+	 \item $w2$ is the advance ( $ >0$ ) or the delay ($<0$)
+	 \item $w3$ is the speed ration
+	\end{itemize}
+	\end{exampleblock}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Comparaison}
+	\framesubtitle{Compute the temporal-shift parameter}
+	
+	Via DTW, we compute the optimal path and the associated weight between the template $c$ and the segment $s$ :
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.4,center]{report_pictures/exemple_chemin.png}
+		\caption{An exemple of path}
+		\label{ex_dist_rep}
+	\end{figure}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Comparaison}
+	
+	We denote the optimal path by : $\Pi = \{(p_{s_i}, p_{c_j})\}_{i,j \in \{1, ..., n\} \times \{1, ..., m\} }$
+	
+	The path has a length $p$.
+	
+	The weight of the optimal path: $R = \{ \rho_i \}_{i \in \{1, ..., p\} } = \{ (c_{k_i} - s_{k_j})^2 \}_{k \in \{1, ..., p\} }$ with $(k_i,k_j)$ the k-eme couples of $\Pi$
+	
+	\begin{alertblock}{Goal}
+		Get a linear regression : $d = a \times x + b$ of this path so as to compute $w_2$ (the delay) and $w_3$ (the speed).
+	\end{alertblock}	
+	
+	\begin{block}{$w_2$ and $w_3$}
+	\begin{itemize}
+		\item $w_3=a$
+		\item $w_3 \times (-w_2) + b = 0 \Leftrightarrow w_2 = \frac{a}{b}$
+	\end{itemize}
+	\end{block}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Comparaison}
+	\framesubtitle{The influence of $w_2$}
+
+	\begin{figure}
+   	\begin{minipage}[c]{.46\linewidth}
+      \includegraphics[scale=0.3]{report_pictures/retard.png}
+      \caption{$w_2 < 0$ : a delay}
+   	\end{minipage} \hfill
+   	\begin{minipage}[c]{.46\linewidth}
+      \includegraphics[scale=0.3]{report_pictures/avance.png}
+      \caption{$w_2 > 0$ : an advance}
+  	\end{minipage}
+	\end{figure}
+
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Comparaison}
+	\framesubtitle{$w2$ and $w3$}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.3,center]{report_pictures/path.png}
+		\caption{The path matrix}
+		\label{ex_dist_rep}
+	\end{figure}
+	
+\end{frame}
+
+
+\begin{frame}
+	\frametitle{Time Series Comparaison}
+	\framesubtitle{$w2$ and $w3$}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.3,center]{report_pictures/regression.png}
+		\caption{The regression of the path, here $w2=39$ and $w3=0.9938$. This is correct}
+		\label{ex_dist_rep}
+	\end{figure}
+
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Comparaison}
+	\framesubtitle{The bound of $w2$ and $w3$}
+	
+	The temporal-shift parameters must verify some bounds constraints.
+	
+	\begin{itemize}
+	\item $w2 \in [0, m-n]$ where $m$ is the length of the segment and $n$ the length of the template	
+	\item $w3 \in [\Un_{-}, \Un_{+}]$
+	
+
+	\end{itemize}
+	
+	The parameters must be computed under this constraints. Yet the constraints are not verify in the general case ! 
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Comparaison}
+	\framesubtitle{Compute the spatial-shift}
+	
+	Without considering the temporal-shift it's quite a simple problem. Indeed it's a least-square method.
+	
+	\[ d = \underset{w_0,w_1}{min} (t - w_1 s - w_0)^T B (t - w_1 s - w_0) = \underset{w_0,w_1}{min} \sum \frac{(t_i - w_1 x_i - w_0)^2}{\sigma_i^2} \]
+	
+	At the present time this solution has been implemented correctly, and the following results have been obtain with this solution.
+	
+	\begin{exampleblock}{Improvements}
+	
+	When the temporal parameter would have been computed, the problem will become more tricky. Indeed, one would have to reel in the segment to the template.
+	\end{exampleblock}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Comparaison}
+	\framesubtitle{Remaining question}
+
+	\begin{itemize}
+		\item The bounds of $w_i, i \in {1,2,3,4}$
+		\item The interpolation of $s$ to reel in the segment to the template
+	\end{itemize}		
+\end{frame}
+
+\begin{frame}
+	\frametitle{Time Series Classification}
+
+	We define the following distance vector for a serie regarding to all the template :
+	
+	\[ d=[w_{0,1}, w_{1,1}, w_{2,1}, w_{3,1}, w_{0,2}, ..., w_{3,12}] \in \R^{48} \]
+	
+	With this distance vector we obtain the following data distributions. 
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.22]{data/DistanceVectorComponents/3_11.png}
+		\caption{Components $3$ and $11$ of the distance vector ie $w_{1,2}$ and $w_{1,6}$}
+		\label{dist_components}
+	\end{figure}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Why we do not compute a distance in $\R$}
+	
+	\begin{figure}
+      \includegraphics[scale=0.25,center]{data/ImagesOfRecognition/WalkingForward_REC_WalkingForward.png}
+      \caption{WalkingForward recognizing WalkingForward}
+   	\end{figure} 
+   	\begin{figure}
+      \includegraphics[scale=0.25,center]{data/ImagesOfRecognition/WalkingForward_REC_ElevatorDown.png}
+      \caption{WalkingForward recognizing ElevatorDown}
+	\end{figure}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Test and Performance}
+	\framesubtitle{Test of the recognition}
+	
+	With the half-computed solution (considering only the spatial shift) we have measured the accuracy of the recognition using a cross-vaidation and a hold-out-validation for four different classifiers :
+	
+	\begin{itemize}
+		\item Support Vector Machine
+		\item Gaussain Naive Bayesian
+		\item k-Nearest Neighbors
+		\item Decision Tree
+	\end{itemize}
+		
+\end{frame}
+
+\begin{frame}
+	\frametitle{Test and Performance}
+	\framesubtitle{Test of the recognition}
+	
+	\begin{exampleblock}{How to read the following graphics}
+	The vertical axis corresponds to the activities one wants to recognize. The horizontal axis corresponds to the activities recognized by the algorithm.
+	
+	For instance the value at the coordinate $(1,2)$ match with the percentage of serie recognized as the second activity while in reality it is the first activity. 
+	
+	Thus, the detection would be perfect if for every data set, one would obtain a diagonal matrix.
+	\end{exampleblock}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Test and Performance}
+	\framesubtitle{Test of the recognition : SVM}
+			
+	\begin{figure}[H]
+			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.42,center]{report_pictures/auto_recognition_svm.png}
+  			\end{minipage} \hfill
+   			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.42,center]{report_pictures/recognition_svm.png}
+   			\end{minipage}
+		\caption{Auto and Hold-Out Validation for SVM}
+		\label{svm}
+	\end{figure}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Test and Performance}
+	\framesubtitle{Test of the recognition : Gaussian Naive Bayes}
+			
+	\begin{figure}[H]
+			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.42,center]{report_pictures/auto_recognition_gnb.png}
+  			\end{minipage} \hfill
+   			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.42,center]{report_pictures/recognition_gnb.png}
+   			\end{minipage}
+		\caption{Auto and Hold-Out Validation for Gaussian Naive Bayes}
+		\label{gnb}
+	\end{figure}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Test and Performance}
+	\framesubtitle{Test of the recognition : k-nearest neigbors}
+			
+	\begin{figure}[H]
+			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.42,center]{report_pictures/auto_recognition_knn.png}
+  			\end{minipage} \hfill
+   			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.42,center]{report_pictures/recognition_knn.png}
+   			\end{minipage}
+		\caption{Auto and Hold-Out Validation for k-nearest neigbors}
+		\label{knn}
+	\end{figure}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Test and Performance}
+	\framesubtitle{Test of the recognition : Decision Tree}
+			
+	\begin{figure}[H]
+			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.42,center]{report_pictures/auto_recognition_dtc.png}
+  			\end{minipage} \hfill
+   			\begin{minipage}[c]{.46\linewidth}
+      			\includegraphics[scale=0.42,center]{report_pictures/recognition_dtc.png}
+   			\end{minipage}
+		\caption{Auto and Hold-Out Validation for Decision Tree}
+		\label{dtc}
+	\end{figure}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{TODO : What I have to do}
+	
+	\begin{itemize}
+	\item Compute without error $w2$ and $w3$
+	\item Carry out the temporal shift and compute $w0$ and $w2$.
+	\item Implement the fast dtw algorithm
+	\item Think how to speed up the comparaison
+	\item Introduce in the classification a \textit{draft} class
+	\item Take into count the continues aspect of the time
+	\item Think about the exceptionally long time of the escalator pattern with  regards to the rest.
+	\item Write all the test (incomplet at the present time)
+	\item Write all the document (incomplet at the present time)
+	\end{itemize}
+\end{frame}	
+
+%\begin{frame}[allowframebreaks]
+%        \frametitle{References}
+%        \bibliographystyle{bibidx/fr-plain}
+%        \bibliography{biblio.bib}
+%\end{frame}
+
+
+
+\end{document}

@@ -6,10 +6,11 @@
 Let c a template and s a segment.
 Thus, one wants to write : c(t) ~ w1 * s(w3*t + w2) + w0
 
-This module focuses on the spatial shift characterization ie on the computation of w0 and w1
+This module focuses on the spatial shift characterization ie on the segmentation_construction of w0 and w1
 
 """
 
+from math import sqrt
 
 def compute_spatial_shift_parameters(template, variance, serie):
     """
@@ -54,7 +55,7 @@ def compute_spatial_shift_parameters(template, variance, serie):
 #     print("w1,w0=",w1,w0)
 #     print("R^2=", score)
 #     print("w0,beta0=",w0,w1)
-    #distance=[int(Y[i] - w0*X[i]-w1)**2 for i in range(len(X))]
+    distance=[int(Y[i] - w0*X[i]-w1)**2 for i in range(len(X))]
     #return sqrt(sum(distance))
     #return most_important_components(distance)
-    return (w0, w1)
+    return (w0, w1,sqrt(sum(distance)))

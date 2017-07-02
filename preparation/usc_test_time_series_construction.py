@@ -2,8 +2,7 @@
 
 from storage.load import load_list, load_segmentation
 from storage.save import save_list, save_segments
-from segmentation.segmentation import Segmentation
-from reconnaissance.reconnaissance import recognize
+from segmentation import Segmentation
 import os.path
 
 
@@ -20,7 +19,7 @@ def prepare_test_data_j(j):
         filename="USC-Activities\\{0}\\SSQserie.csv".format(activities[j])
         print(os.path.abspath(filename))
         serie=load_list(filename, True)
-        sgmtt=Segmentation(serie=load_list(filename, True),order=4,activity=activities[j],automatic=False, compute=False)
+        sgmtt=Segmentation(serie=serie,order=4,activity=activities[j],automatic=False, compute=False)
         filepath="USC-Activities\\{0}\\test".format(activities[j])
         sgmtt.store(filepath)
         sgmtt.display_segmentation(filepath)

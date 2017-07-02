@@ -1,11 +1,11 @@
 # coding: utf-8
-import temporal_shift as sft
+from shift import temporal_shift as sft
 
 from math import sin,cos,pi
-from load import load_list, load_segments
-from computation import normalization
+from storage.load import load_list, load_segments
+from segmentation_construction import normalization
 
-from variables import activities
+from utilities.variables import activities
 
 def template(x):
     if 0<x<2*pi:
@@ -100,16 +100,16 @@ def clean_example(w2=1,w3=-1):
         [template(x) for x in X_template], [my_deformation(x) for x in X_serie],plot=True)
     
 def plot_all_example_path(template):
-    from load import load_list
+    from lostorage.loadmport load_list
     list_name=["test_serie"+str(i) for i in range(1,7)]
     list_series=[load_list(l) for l in list_name]
     for s in list_series:
-        (w2,w3,score_min,rising_too_strong, tray_too_long)=sft.compute_temporel_shift_parameters1(
-            template, s)#,plot=True)
+        (w2,w3,score_min,rising_too_strong, tray_too_long)=sft.compute_temporel_shift_parameters(
+            template, s,plot=True)
         
 def compute_w2_w3_for_template_i_serie_j(i,j,start=10):
     template=load_list("USC-Activities\\{0}\\manual\\average_segment.csv".format(activities[i]))
-    serie=load_list("USC-Activities\\{0}\\SSQserieTotale.csv".format(activities[j]))[start:len(template)+20+start]
+    serie=load_list("USC-Activities\\{0}\\SSQserieTotale.csv".format(activities[j]))[start:180+start]
 
     sft.compute_temporel_shift_parameters(template, normalization(serie), True)    
     

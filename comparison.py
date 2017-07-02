@@ -3,18 +3,18 @@
 """
 @author: Philippenko
 
-This module implements the comparaison process between a sub-serie and all the templates.
+This module implements the comparison process between a sub-serie and all the templates.
 """
 
 
-from spatial_shift import compute_spatial_shift_parameters
-from temporal_shift import compute_temporel_shift_parameters
-from variables import activities
-from computation import normalization
-from load import get_filename, load_list
+from shift.spatial_shift import compute_spatial_shift_parameters
+from shift.temporal_shift import compute_temporel_shift_parameters
+from utilities.variables import activities
+from segmentation.segmentation_construction import normalization
+from storage.load import get_filename, load_list
 
 #Indicates the number of class
-from variables import n_act
+from utilities.variables import n_act
 
 def build_distance_vector(start,serie):
     """
