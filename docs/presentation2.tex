@@ -1,0 +1,338 @@
+\documentclass[11pt, sans]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[export]{adjustbox}
+\usepackage{graphicx}
+\usepackage{pgfpages}
+\usepackage{listings}
+\usepackage{color}
+
+\usetheme{JuanLesPins}
+
+\newcommand{\R}{\mathbb{R}} 
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\Xr}{\mathbf{X}_{train}} 
+\newcommand{\Xt}{\mathbf{X}_{test}}
+\newcommand{\y}{\mathbf{y}} 
+\newcommand{\yr}{\mathbf{y}_{train}} 
+\newcommand{\yt}{\mathbf{y}_{test}}
+\newcommand{\Un}{\mathbf{1}} 
+
+\definecolor{lightpurple}{rgb}{0.8,0.8,1}
+ 
+\lstset{
+breaklines=true,
+basicstyle=\footnotesize,
+numbers=left,
+stepnumber=1,
+numbersep=5pt,
+numberstyle=\small\color{black},
+keywordstyle=\color{black},
+commentstyle=\color{black},
+stringstyle=\color{black},
+frame=single,
+tabsize=2,
+backgroundcolor=\color{lightpurple}
+}
+
+\title[Présentation]{Time series recognition : Performances}
+\subtitle[\ldots]{Forecsys}
+\author{Constantin Philippenko}
+\institute[MIPT]{Moscou}
+\date{\today}
+
+\addtobeamertemplate{footline}{\insertframenumber/\inserttotalframenumber}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}
+	\frametitle{Goal of the project}
+	
+	\begin{alertblock}{Objectif}
+	Recognize the activity of workers looking on their acceleration movements. That implies a time series recognition study.
+	\end{alertblock}
+	
+	\begin{block}{Two part}
+	\begin{itemize}
+		\item Modelisation of the problem :
+			\begin{enumerate}
+				\item Data Preparation
+				\item Data Segmentation
+				\item Template Construction
+			\end{enumerate}
+		\item Model exploitation	
+			\begin{enumerate}
+				\item Time Series Comparaison
+				\item Time Series Classification
+				\item Time Series Recognition
+			\end{enumerate}			 
+	\end{itemize}
+	
+	\end{block}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Introduction}
+	
+	The goals :
+	\begin{itemize}
+		\item Check that the classification is not random
+		\item Check that a step is recognized as a step
+		\item Check that a movement different of a step is not recognized as a step
+		\item Check that our modelisation is relevant for a multi-classes classification
+		\item Check that all the features are relevant, and if not find the useless ones.
+		\item Find the best classifier
+		\item Make the recognition processus as fast as possible
+	\end{itemize}
+		
+\end{frame}
+
+\begin{frame}
+	\frametitle{Introduction}
+		The datasets :
+	\begin{itemize}
+		\item The Forecsys Data : a binary classification : walking or not walking.
+		\item The USC Data : a multi-classes classification (11 classes)
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Introduction}
+	The classifiers:
+	\begin{itemize}
+		\item LinearSVM with a dual view (more samples than features)
+		\item Naives Bayes Gaussian
+		\item k-Nearest Neighbors : \textit{choose the optimal k}
+		\item Descision Tree : \textit{choose the maximal lenght, the maximum numbers of features used in each node}
+		\item Random Forest : \textit{choose the number of trees and the trees parameters}	
+	\end{itemize}		
+\end{frame}		
+	
+\begin{frame}
+\frametitle{Introduction}
+	The features:
+	\begin{itemize}
+		\item The spatial-shift parameters : $w_0$, $w_1$ and the spatial distance between the series and the template
+		\item The temporel-shift parameters : $w_2$, $w_3$ and the DTW distance between the series and the template
+		\item The fourier transformation parameters : $\Re(fft_0)$, $\Re(fft_1)$ and $\Im(fft_1)$
+		\item The dispersion of the series values\footnote{Very useful to quickly discriminate the standings activities}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Confusion matrices construction}
+
+Data : $ \X, \y \underset{\text{splitted in two parts}}{\Longrightarrow} \Xr, \y_{train}$ and $ \Xt, \y{test}$
+
+\bigskip
+
+Model fitting:
+
+\begin{itemize}
+	\item Fit($\Xr,\yr$)
+	\begin{itemize}
+		\item Auto-recognition : predict($\Xr,\yr$)
+		\item Hold-Out recognition : predict($\Xt, \yt$)
+	\end{itemize}
+	\item $\text{Fit}_{\text{3-fold}}(\X,\y) \Longrightarrow $ $\underset{i \in \{1,2,3\}}{mean}(\text{predict}(\X_{fold_i}, \y_{fold_i}))$
+\end{itemize}
+
+$\hookrightarrow$ At all, three confusion matrices for each classifiers.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Check that the classification is not random}
+\framesubtitle{Binary Classification}
+
+ \begin{overprint}
+   
+	\input{sub_tex/binary_CV_image_including} 
+	
+ \end{overprint} 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Check that the classification is not random}
+\framesubtitle{Multi-Classification}
+
+ \begin{overprint}
+   
+	\input{sub_tex/multi_CV_image_including} 
+	
+ \end{overprint} 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Check that the classification is not random}
+\framesubtitle{Cluster observation on the confusion matrices}
+
+\begin{alertblock}{There are clearly four clusters in the time series}
+\begin{itemize}
+	\item Walking : it's very hard to dissociate the left/right/forward movements as well as the stairs movements
+	\item Running
+	\item Jumping
+	\item The standing activities like sleeping, standing and sitting 
+\end{itemize}
+
+\end{alertblock}
+\begin{exampleblock}{Expectation}
+For the binary classification : we have dissociated the five steps. Thus, we expect a hight error of the second kind during the recognition process.
+\end{exampleblock}
+\end{frame}
+	
+\begin{frame}
+\frametitle{Check that the classification is not random}
+\framesubtitle{Recap tables}
+
+\begin{overprint}
+	\input{sub_tex/tables_CV_recap} 
+\end{overprint}	        
+
+\end{frame}
+
+\begin{frame}[fragile]
+
+\begin{overprint}
+
+\onslide<1>
+\begin{lstlisting}
+FUNCTION : Continuous recognition of a step
+INPUT : a time series, a template, a fitted time series classificateur
+FOR EACH points of the time series:
+	select a sub-segment of the time series starting at the current point and with a length 10 % longer than the template
+	compute the fft and the dispersion of the selected segment
+	normalize the selected segment
+	compute the temporal shift parameters
+	performs the temporal shift on the normalized segment
+	compute the spatial shift parameters
+	carry out the classification of the segment 
+	IF the segment is recognized as a step :
+		go directly to the last point of the time and continue the loop
+	ELSE :
+		perform the recognition of the next point
+\end{lstlisting}
+
+\onslide<2>
+
+\begin{figure}[H]
+	\includegraphics[scale=0.3,center]{../report_pictures/continuous_recognition/example_comparison_process.png}
+	\caption{Continous recognition : the recognition of a segment}
+	\label{example_comparison_process}
+\end{figure}
+
+\onslide<3>
+
+\begin{exampleblock}{Notes}
+
+The recognition algorithm is very fast for a time series constitued of only steps. Indeed, once a step is detected, the algorithm directly skip to the end of it. Thus, fewer calculation are done. Contrariwise, in a time series without any steps, calulation are done for every points which considerably slows down the process.
+
+\end{exampleblock}
+
+\end{overprint}
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{The binary classification}
+
+\begin{alertblock}{Goal}
+Measure the error of the first and second kind and to minimize them.
+\end{alertblock}
+
+\begin{exampleblock}{Method}
+\begin{itemize}
+	\item Error of the first kind : we have manually constructed a time series with $198$ step in a row. We carry out the coutinuous algorithm of step detection on it, and count how many times a step has been recognized.
+	\item Error of the second kind : we have manually constructed a time series without any step. We perform the coutinuous algorithm of step detection on it, and count how many time a step has been recognized while it should not !
+\end{itemize}
+\end{exampleblock}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{The binary classification}
+\begin{alertblock}{Current limits of this tests}
+\begin{itemize}
+	\item For the first case : a same step could be recognized several time\footnote{This is due to the poor accuracy of $w_2$ and $w_3$ in some particular point}, this fact could significantly pump up the rates. That explains why for some classifier we get 110 \% of recognition while all the steps have not been detected.
+	\item The second time series has been constructed with several activities : standing, jumping, walking left/right/backward but without forward movement. So one should expected to recognize no step. However, the walking movement being really near, one will probably detect a lot of step and thereby increase the error of second kind.
+\end{itemize}
+\end{alertblock}
+
+\end{frame}
+	
+\begin{frame}
+\frametitle{The binary classification}
+\framesubtitle{Check that a step is recognized as a step}
+
+\begin{figure}[H]
+	\includegraphics[scale=0.46,center]{../report_pictures/continuous_recognition/recognition_of_step_by_RandomFor.png}
+	\caption{Countinous recognition of a step time series by a Random Forest Classifier}
+	\label{a_step_is_a_step}
+\end{figure}
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{The binary classification}
+\framesubtitle{Check that a step is recognized as a step}
+
+\begin{overprint}
+\onslide<1>
+\begin{figure}[H]
+	\includegraphics[scale=0.46,center]{../report_pictures/continuous_recognition/recognition_of_not_step_by_RandomFor.png}
+	\caption{Continous recognition of a not-step time series by a Random Forest Classifier}
+	\label{a_not-step_is_a_step}
+\end{figure}
+
+\onslide<2>
+\begin{figure}[H]
+	\includegraphics[scale=0.46,center]{../report_pictures/continuous_recognition/recognition_of_not_step_by_KNeighbor.png}
+	\caption{Continous recognition of a not-step time series by a k-nearest neighbors algorithm}
+	\label{a_not-is_sometimes_a_step}
+\end{figure}
+
+
+\end{overprint}	 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{The binary classification}
+\framesubtitle{Tables recap}
+
+	\input{sub_tex/recap_continuous_recognition.tex}
+
+\end{frame}
+
+\begin{frame}
+	\frametitle{TODO : What I have to do}
+	
+	\begin{itemize}
+	\item Formally measure the speed of the comparison
+	\item Select the best parameters for the classification
+	\item Carry out a LB\_keogh comparaison on the times series so as to fast up the comparaison process
+	\item Found a time series interpolation algorithm\footnote{So as to properly compute $w_0$ and $w_1$}
+	\item Fast up the recognition process
+	\item Write all the test (incomplet at the present time)
+	\item Write all the documentation (incomplet at the present time)
+	\item Write an essay dealing with this topic
+	\end{itemize}
+\end{frame}	
+
+%\begin{frame}[allowframebreaks]
+%        \frametitle{References}
+%        \bibliographystyle{bibidx/fr-plain}
+%        \bibliography{biblio.bib}
+%\end{frame}
+
+
+
+\end{document}

@@ -1,0 +1,41 @@
+
+        \onslide<1>
+        \begin{tabular}{|c|c|c|c|c|c|c|}
+            \hline
+            Activity & LinearSVC & GaussianN & KNeighbor & DecisionT & RandomFor & LogisticR  \\
+            \hline
+            0 & 92.6 & 93.8 & 92.9 & 89.7 & 92.5 & 89.7  \\
+ 		\hline 
+ 		1 & 82.1 & 79.8 & 64.3 & 81.5 & 89.9 & 80.3  \\
+ 		\hline 
+ 		
+        \end{tabular}
+        
+        \onslide<2>
+        \begin{tabular}{|c|c|c|c|c|c|c|}
+            \hline
+            Activity & LinearSVC & GaussianN & KNeighbor & DecisionT & RandomFor & LogisticR  \\
+            \hline
+            0 & 83.6 & 88.3 & 74.6 & 61.4 & 88.1 & 77.9  \\
+ 		\hline 
+ 		1 & 34.5 & 25.2 & 57.0 & 67.1 & 77.1 & 31.6  \\
+ 		\hline 
+ 		2 & 64.4 & 64.9 & 39.0 & 66.4 & 62.2 & 57.2  \\
+ 		\hline 
+ 		3 & 68.3 & 78.7 & 59.0 & 52.6 & 62.9 & 67.1  \\
+ 		\hline 
+ 		4 & 66.1 & 44.8 & 32.1 & 59.5 & 70.4 & 65.0  \\
+ 		\hline 
+ 		5 & 95.8 & 96.1 & 64.9 & 100.0 & 100.0 & 96.1  \\
+ 		\hline 
+ 		6 & 91.7 & 92.7 & 58.0 & 94.4 & 93.5 & 90.1  \\
+ 		\hline 
+ 		7 & 70.5 & 51.7 & 66.4 & 68.4 & 67.8 & 76.5  \\
+ 		\hline 
+ 		8 & 27.5 & 65.9 & 15.0 & 82.5 & 77.7 & 17.7  \\
+ 		\hline 
+ 		9 & 26.1 & 35.0 & 4.0 & 49.2 & 47.3 & 25.5  \\
+ 		\hline 
+ 		
+        \end{tabular}
+        
