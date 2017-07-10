@@ -11,12 +11,17 @@ from shift.spatial_shift import compute_spatial_shift_parameters
 from shift.temporal_shift import compute_temporel_shift_parameters
 from utilities.variables import activities
 from segmentation.segmentation_construction import normalization
+from segmentation.segmentation_construction import smoothing
 from storage.load import get_filename, load_list
+
+from dba import LB_Keogh
+
+import numpy as np
 
 #Indicates the number of class
 from utilities.variables import n_act
 
-def build_distance_vector(start,serie):
+def build_distance_vector(start,serie, plot=False):
     """
     Build the distance vector of a sub-serie.
     
@@ -24,7 +29,7 @@ def build_distance_vector(start,serie):
     template is needed. 
     
     The distance vector is computed regarding all the activities ! And for each activity,
-    there is a new tempalte, with a new length.
+    there is a new template, with a new length.
     
     Parameters
     -----------
@@ -36,36 +41,75 @@ def build_distance_vector(start,serie):
     """
     distance=[]
     for act in activities[:n_act]:
-        filename=get_filename(act, "manual")
+#         filename=get_filename(act, "manual")
+        filename="forecsys_data\\juncture"
         template=load_list(filename+"\\average_segment.csv")
+        template=smoothing(template,1)
         template_variance=load_list(filename+"\\dispersion_segment.csv")
         longueur_fenetre=int(len(template)*(1+20.0/100))
         normalized_serie=normalization(serie[start:start+longueur_fenetre])
         
         # Calcul de w2,w3
-        (w2,w3,dist)=compute_temporel_shift_parameters(template, normalized_serie)
-        if w2<0:
-            template2=template[-int(w2):]
-            template_variance2=template_variance[-int(w2):]
-            half_shifted_serie=normalized_serie[0:len(template2)]
-        else:
-            half_shifted_serie=normalized_serie[int(w2):int(w2)+len(template)]
-            template2=template
-            template_variance2=template_variance
-        try:
-            (w0,w1,dist2)=compute_spatial_shift_parameters(template2, template_variance2, half_shifted_serie)
-        except(ZeroDivisionError):
+        (w2,w3,dist)=compute_temporel_shift_parameters(template, normalized_serie,plot)
+        if abs(w2)>len(template)/2:
             (w0,w1,dist2)=compute_spatial_shift_parameters(template, template_variance, normalized_serie[:len(template)])
-    
+            half_shifted_serie=normalized_serie[0:len(template)]
+        else:
+            if w2<0:
+                template2=template[-int(w2):]
+                template_variance2=template_variance[-int(w2):]
+                half_shifted_serie=normalized_serie[0:len(template2)]
+            else:
+                half_shifted_serie=normalized_serie[int(w2):int(w2)+len(template)]
+                template2=template
+                template_variance2=template_variance
+            try:
+                (w0,w1,dist2)=compute_spatial_shift_parameters(template2, template_variance2, half_shifted_serie)
+            except(ZeroDivisionError):
+                (w0,w1,dist2)=compute_spatial_shift_parameters(template, template_variance, normalized_serie[:len(template)])
         distance.append(w0)
         distance.append(w1)
         distance.append(dist2)
         distance.append(w2)
         distance.append(w3)
         distance.append(dist)
+    my_fft=np.fft.fft(half_shifted_serie)
+    distance.append(np.real(my_fft[0]))
+    distance.append(np.real(my_fft[1]))
+    distance.append(np.imag(my_fft[1]))
+    from statistics import stdev
+    distance.append(stdev(serie[start:start+longueur_fenetre])) 
+        
+    if plot:
+        print("Start point :", start)
+        print(serie[start:start+longueur_fenetre])
+        import matplotlib.pyplot as plt
+        plt.subplot(131)
+        plt.plot(serie[start:start+longueur_fenetre], label="Series")
+        plt.plot(template, label="Template")
+        plt.legend(loc="best")
+        plt.subplot(132)
+        plt.plot(normalized_serie, label="Normalized Series")
+        plt.plot(template, label="Template")
+        plt.legend(loc="best")
+        plt.subplot(133)
+        plt.plot(half_shifted_serie, label="Half Shifted Series")
+        plt.plot(template, label="Template")
+        plt.legend(loc="best")
+        plt.show()
 
     return distance
 
+def var_distance(template,serie):
+    from math import exp
+    var_serie=[]
+    var_temp=[]
+    n=len(serie)/20
+    for i in range(len(serie)-n):
+        var_serie.append(max(serie[i:i+n])-min(serie[i:i+n]))
+        var_temp.append(max(template[i:i+n])-min(serie[i:i+n]))
+    return sum([exp(var_temp[i]-var_serie[i]) for i in range(len(var_serie))])
+                           
 ######################################################################
 
 # The following functions are depracated. They have been useful when we was computing

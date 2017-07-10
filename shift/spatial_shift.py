@@ -11,6 +11,7 @@ This module focuses on the spatial shift characterization ie on the segmentation
 """
 
 from math import sqrt
+import matplotlib.pyplot as plt
 
 def compute_spatial_shift_parameters(template, variance, serie):
     """
@@ -32,30 +33,35 @@ def compute_spatial_shift_parameters(template, variance, serie):
         the variance of the template
     serie: list-like
     """
-    X=[serie[i]/variance[i] for i in range(len(serie))]
-    Y=[template[i]/variance[i] for i in range(len(serie))]
-    X=serie
-    Y=template
+    Y=[serie[i]/variance[i] for i in range(len(serie))]
+    X=[template[i]/variance[i] for i in range(len(serie))]
     X_moy=sum(X)/len(X)
     Y_moy=sum(Y)/len(Y)
     covXY=sum([X[i]*Y[i] for i in range(len(X))])/len(X)-X_moy*Y_moy
     varX=sum([x*x for x in X])/len(X)-X_moy*X_moy
-    w0=covXY/varX
-    w1=Y_moy-covXY*X_moy/varX
+    w1=covXY/varX
+    w0=Y_moy-covXY*X_moy/varX
+    
+#     plt.plot(X, label="Template")
+#     plt.plot(Y, label="Serie")
+#     plt.legend()
+#     plt.xlabel("Times")
+#     plt.ylabel("Weighted Time Series")
+#     plt.title("Times series comparison")
+#     plt.show()
     
 #     from sklearn import linear_model
 #     from numpy import array
 #     reg = linear_model.LinearRegression()
-#     
+#      
 #     Xx=array(X).reshape(len(X),1)
 #     reg.fit(Xx,Y)
 #     score=reg.score(Xx, Y)
 #     w1=reg.coef_
 #     w0=reg.intercept_
-#     print("w1,w0=",w1,w0)
-#     print("R^2=", score)
-#     print("w0,beta0=",w0,w1)
-    distance=[int(Y[i] - w0*X[i]-w1)**2 for i in range(len(X))]
+    distance=[int(X[i] - w1*Y[i]-w0)**2 for i in range(len(X))] # X and Y !! Not template and X !
     #return sqrt(sum(distance))
     #return most_important_components(distance)
     return (w0, w1,sqrt(sum(distance)))
+
+

@@ -109,7 +109,7 @@ def manuel_selection_breaking_points_with_time(absc, serie):
     print("Only the right click will be considered ...")
     fig, ax = plt.subplots()
     ax.plot(absc, serie)
-    c=ClickEventSegmentationWithTime(ax,abs)
+    c=ClickEventSegmentationWithTime(ax,absc)
     fig.canvas.mpl_connect('button_press_event', c)
     plt.show()
     return c.get_point() 

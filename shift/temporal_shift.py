@@ -17,7 +17,7 @@ from sklearn import linear_model
 from scipy import optimize
 from storage.save import save_double_list
 import sys
-from segmentation_construction import local_extremums, little_variation
+from segmentation.segmentation_construction import local_extremums, little_variation
 from statistics import median   
 
 import logging
@@ -48,7 +48,7 @@ def prepare_coordinates_path(opt_path):
     coord_y=array(opt_path[:,1])
     return (coord_x, coord_y)
 
-def regression(reg,new_X, new_y, y_level_deb, y_level_fin):
+def regression(reg,new_X, new_y, y_level_deb, y_level_fin, len_template):
 
     
     new_y_prime=[y for y in new_y if y_level_fin >= y >=y_level_deb] 
@@ -66,12 +66,12 @@ def regression(reg,new_X, new_y, y_level_deb, y_level_fin):
     reg_min=reg
     w3=reg.coef_
     if w3==0:
-        w2=-sys.maxint
+        w2=len_template
     else:
         w2=-reg.intercept_/w3
     # We consider that if w2 is a bit less than 0, that means that it is equal to 0 ie there is no delay.
-    if w2 < 0 and w2 > -5:
-        w2=0
+#     if w2 < 0 and w2 > -5:
+#         w2=0
     return (w2,w3, reg.score, new_X, new_y)
 
 def compute_temporel_shift_parameters(template, serie, plot=False):
@@ -87,7 +87,7 @@ def compute_temporel_shift_parameters(template, serie, plot=False):
     .. todo:: Dynamic choose of sub-intervals depending of the trays, risings ... and of the the points concentration
     """
     
-    
+    len_template=len(template)
     
     template=[template[i] for i in range(0, len(template),2)]
     serie=[serie[i] for i in range(0, len(serie),2)]
@@ -95,15 +95,16 @@ def compute_temporel_shift_parameters(template, serie, plot=False):
     reg_min = linear_model.LinearRegression()
     reg_select = linear_model.LinearRegression()
     
-    (template_max, template_min)=local_extremums(template)
-    (serie_max, serie_min)=local_extremums(serie)
-        
+#     (template_max, template_min)=local_extremums(template)
+#     (serie_max, serie_min)=local_extremums(serie)
+#         
 #     (cost,path,weight)=DTWCumulMat(medoid=template,s=serie)
 #     (opt_path,weight_opt_path)=optimal_path(len(template), len(serie),path,weight)
+#     dist=cost[-1][-1]
 
 #     (d,coordinates,weight_cost_path)=dtw(template, serie)
     dist, cost, acc, dump_path, weight_opt_path = dtw(template, serie)
-    
+     
     opt_path=[]
     for i in range(len(dump_path[0])):
         opt_path.append([dump_path[1][i], dump_path[0][i]])
@@ -141,7 +142,7 @@ def compute_temporel_shift_parameters(template, serie, plot=False):
 #         else:
 #             (w2,w3,R_max, new_X, new_y)=regression(reg,new_X, new_y, y_deb, len(y))
 #     else:
-    (w2,w3,R_max, new_X, new_y)=regression(reg,new_X, new_y, y_deb, y_fin)   
+    (w2,w3,R_max, new_X, new_y)=regression(reg,new_X, new_y, y_deb, y_fin, len_template)   
              
             
     (X_min,y_min)=(new_X,new_y)
@@ -197,22 +198,24 @@ def compute_temporel_shift_parameters(template, serie, plot=False):
     X_min=new_X
     y_min=new_y
     R_max=1
-            
+        
+    
     if plot:
-        print("w2,w3,R2=",w2,w3,dist)
+        print("w2,w3,dist=",w2,w3,dist)
         plot_temporal_shift(template, serie, cost, opt_path, weight_opt_path, new_X, new_y, X_min, y_min, reg, reg_min, y_deb, y_fin)
     # w2 is the number of points shift ! Does not have any sense to return a float !
    
-    if w2 < -7:
-        w2 = w2 % (len(template)*w3)
-        
-    if w2 > len(serie)-len(template):
-        w2 = w2 % (len(serie) - len(template))
-        
+#     if w2 < -7:
+#         w2 = w2 % (len(template)*w3)
+#          
+#     if w2 > len(serie)-len(template):
+#         w2 = w2 % (len(serie) - len(template))
+    from fastdtw import fastdtw as f
+    dist=f(serie, template)[0]
     try:
         return (int(w2),w3[0],dist)
     except(ValueError):
-        return (sys.float_info.max,w3[0],dist)
+        return (len_template,w3[0],dist)
 
 def remove_tray_and_peack(x,y):
     """
@@ -307,7 +310,10 @@ def plot_temporal_shift(template, serie, cost, opt_path, weight_opt_path, new_X,
     
     ax3.plot(serie, label="Series")
     ax3.plot(template, label="Template")
-    ax3.legend()
+    plt.ylabel("Normalized acceleration")
+    plt.xlabel("Times")
+    plt.title("Times series comparison")
+    ax3.legend(loc="best")
     
     plt.figure()
      
@@ -335,7 +341,9 @@ def plot_temporal_shift(template, serie, cost, opt_path, weight_opt_path, new_X,
     plt.subplot(133)
     plt.plot(template, label="Template")
     plt.plot(serie, label="Serie")
-    plt.legend()
+    plt.legend(loc="best")
     plt.xlabel("Times")
+    plt.ylabel("Normalized acceleration")
+    plt.title("Times series comparison")
     plt.show()
 
