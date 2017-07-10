@@ -35,8 +35,10 @@ def DBA(segments, iter):
     iter: int-like
         the number of iterations
     """
-    print("DBA Initialisation ...")
-    medoid=initial_medoid(segments)
+    from random import randint
+    init_segments=[segments[i] for i in range(0,len(segments), int(len(segments)/10.0))]
+    print("DBA Initialisation with ", len(init_segments), "segments")
+    medoid=initial_medoid(init_segments)#segments[randint(0, len(segments)-1)]
     print("Iteration :", 0)
     (medoid,w)=DBA_update(medoid,segments)
     for i in range(1,iter):
@@ -331,4 +333,19 @@ def _traceback(D):
         q.insert(0, j)
     return array(p), array(q)
 
+from math import sqrt
+
+def LB_Keogh(s1,s2,r):
+    LB_sum=0
+    for ind,i in enumerate(s1):
+        
+        lower_bound=min(s2[(ind-r if ind-r>=0 else 0):(ind+r)])
+        upper_bound=max(s2[(ind-r if ind-r>=0 else 0):(ind+r)])
+        
+        if i>upper_bound:
+            LB_sum=LB_sum+(i-upper_bound)**2
+        elif i<lower_bound:
+            LB_sum=LB_sum+(i-lower_bound)**2
+    
+    return sqrt(LB_sum)
      

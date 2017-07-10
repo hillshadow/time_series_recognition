@@ -46,7 +46,7 @@ def load_list(filename, in_float=True, temps=False):
                 liste.append(datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S.%f'))
             except(ValueError):
                 liste.append(datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S'))
-        if in_float:
+        elif in_float:
             liste.append(float(row[0]))
         else:
             liste.append(int(row[0]))

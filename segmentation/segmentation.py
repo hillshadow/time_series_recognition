@@ -103,13 +103,17 @@ class Segmentation:
     def prunning_breaking_points(self):
         self.breaking_points=sorted(list(set(self.breaking_points)))
         
+    def recompute_bp(self):
+        self.breaking_points=sorted(list(set(self.breaking_points)))
+        
     def recompute_segments(self):
+        self.recompute_bp()
         self.segments=com.compute_segments(self.breaking_points, self.serie)
         self.segments=[com.normalization(s) for s in self.segments]
         
         
     def store(self,filepath):
-        sv.save_list(self.serie, filepath+"\\time.csv")
+        sv.save_list(self.absc, filepath+"\\time.csv")
         sv.save_list(self.serie, filepath+"\\serie.csv")
         sv.save_list(self.breaking_points, filepath+"\\breaking_points.csv")
         sv.save_segments(self.segments, filepath+"\\segments.txt")
@@ -151,7 +155,7 @@ class Segmentation:
         plt.plot([self.average_segment[i]-3*self.dispersion_segment[i] for i in range(len(self.average_segment))],'--r')
         plt.plot([self.average_segment[i]+3*self.dispersion_segment[i] for i in range(len(self.average_segment))],'--r')
         plt.title("Average_segment")       
-        plt.savefig(filepath+"\\average_segment.png") 
+        save_or_not(save,filepath+"\\average_segment.png") 
     
     def display_segmentation(self,filepath,save=True):
         self.plot_breaking_points(filepath)
@@ -177,6 +181,7 @@ class Segmentation:
 def save_or_not(save,filepath):
     if save:
         plt.savefig(filepath)
+        plt.close()
     else: 
         plt.show()
 
