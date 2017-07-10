@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from storage import load as ld
 from comparison import build_distance_vector
+from mpl_toolkits.mplot3d import Axes3D
 
 def plot_dynamic_data_components_i_j(X,y,k,j):
     """
@@ -143,7 +144,6 @@ def plot_data_components_i_j(X, y, i, j, save=False, hightlight=None):
             plt.show()
      
 def plot_data_components_i_j_k(X, y, i, j, k , x_label, y_label, save=False):
-    from mpl_toolkits.mplot3d import Axes3D
     print("Size of the True Classe :", len([e for e in y if e==1]))
     print("Size of the False Classe :", len([e for e in y if e==0]))
     X=np.array([[row[i],row[j], row[k]] for row in X])
@@ -159,16 +159,23 @@ def plot_data_components_i_j_k(X, y, i, j, k , x_label, y_label, save=False):
     else:
         plt.show()
 
-def plot_with_marker(serie, marker, movement, clf):
+def plot_with_marker(serie, marker, fin, movement, clf):
     """
     Here ? Are you really ?
-    """
-    plt.figure(figsize=(15, 4))
-    plt.plot(serie)  
+    """    
+    fig, ax=plt.subplots()
+    ax.plot(serie) 
+    x=[ x for x in range(0,len(serie))]
     # Affichage d'une barre verticale � chaque point de rupture
-    for p in marker:
-        plt.axvline(x=p, linewidth=0.5, color='r')
+    for i in range(len(marker)):
+        p=marker[i]
+        f=fin[i]
+        ax.axvspan(p, f, alpha=0.1, color='red')
+        plt.axvline(x=p, linewidth=0.5, color='m')
+        plt.axvline(x=f, linewidth=0.5, color='g')
     plt.title("Recognition of "+movement+" by "+clf)
+    plt.xlabel("Times (50 Hz)")
+    plt.ylabel("Acceleration (g)")
 #     plt.savefig("report_pictures\\continuous_recognition\\recognition_of_"+movement+"_by_"+clf)
 #     plt.close()
     plt.show()

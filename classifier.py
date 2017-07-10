@@ -164,37 +164,83 @@ def continuous_recognition(X,y,deb,fin,clf=classifiers[0],path="forecsys_data\\o
     filename="forecsys_data\\juncture"
     template=ld.load_list(filename+"\\average_segment.csv")
     marker=[]
-    intervalle=fin-deb
+    marker_fin=[]
+#     intervalle=fin-deb
     clf.fit(X, y)
     t0=deb
     t_current=len(template)*(1+20/100)+deb
     while(t_current < fin):
         vector=build_distance_vector(t0,serie)
         if clf.predict([vector])==0:
-            marker.append(t0)
+            marker.append(t0+vector[3])
             if vector[4]==0:
-                t0=t0+max(len(template),len(template))
-                t_current=t_current+max(len(template),len(template))
+                t_fin=max(vector[3]+len(template),len(template))
+                t0=t0+t_fin
+                t_current=t_current+t_fin
             else:
-                t0=t0+max(int(len(template)/vector[4]),int(len(template)/vector[4]))
-                t_current=t_current+max(int(len(template)/vector[4]),int(len(template)/vector[4]))
+                t_fin=max(vector[3]+int(len(template)/vector[4]),int(len(template)/vector[4]))
+                t0=t0+int(len(template)/vector[4])+vector[3]
+                t_current=t_current+int(len(template)/vector[4])+vector[3]
+            marker_fin.append(t0)
         else:
             t0+=1
             t_current+=1
     marker=np.array([ [m] for m in marker])
-    plot_with_marker(serie, marker, movement, str(clf)[0:9])
+    marker_fin=np.array( [[f] for f in marker_fin])
+    plot_with_marker(serie, marker, marker_fin,movement, str(clf)[0:9])
 #         plot_with_marker(serie, build_hierarchical_clustering(marker,intervalle/50))
     return marker
 
+def univariate_selection(X,y):
+    from sklearn.feature_selection import SelectKBest
+    from sklearn.feature_selection import chi2
+    test = SelectKBest(k=4)
+    fit = test.fit(X, y)
+    np.set_printoptions(precision=3)
+    print(fit.scores_)
+    features = fit.transform(X)
+    # summarize selected features
+    print(features[0:5,:])
+
 def features_selection(X,y):
     
+    """
+    Performs a several methods of features selection for all the classifiers
+    
+    @see: http://machinelearningmastery.com/feature-selection-machine-learning-python/
+    
+    1. Univariate Selection :
+        Statistical tests can be used to select those features that have the strongest 
+        relationship with the output variable.The scikit-learn library provides the SelectKBest 
+        class that can be used with a suite of different statistical tests to select a specific 
+        number of features.
+        
+    2. Recursive Feature Elimination :
+        Works by recursively removing attributes and building a model on those attributes that 
+        remain. It uses the model accuracy to identify which attributes (and combination of 
+        attributes) contribute the most to predicting the target attribute.
+        
+    3. Principal Component Analysis :
+        Principal Component Analysis (or PCA) uses linear algebra to transform the dataset into 
+        a compressed form.Generally this is called a data reduction technique.
+        
+    4. Feature Importance :
+        Bagged decision trees like Random Forest and Extra Trees can be used to estimate the importance of features.
+        
+    5. Select From Model :
+        Meta-transformer for selecting features based on importance weights.
+    
+    """
+    
+    # Four methods : 
     from sklearn.feature_selection import SelectFromModel
-    for clf in classifiers[:1]+classifiers[3:]:
-        fitted_model=clf.fit(X,y)
-        new_model=SelectFromModel(fitted_model, prefit=True)
-        print(str(clf))
-        print("The new model have selected ", new_model.transform(X).shape[1]," features")
-        print(new_model.get_support(True))
+    for clf in classifiers:
+        univariate_selection()
+#         fitted_model=clf.fit(X,y)
+#         new_model=SelectFromModel(fitted_model, prefit=True)
+#         print(str(clf))
+#         print("The new model have selected ", new_model.transform(X).shape[1]," features")
+#         print(new_model.get_support(True))
         
 def optimum_parameters(X,y):
     for i in range(1,len(clf_parameters)):
@@ -207,7 +253,7 @@ def optimum_parameters(X,y):
             plot_validation_curve(X,y, classifiers[i], parameters[j], parameters_intervalle[j],str(classifiers[i])[0:9]+"_"+str(parameters[j]))
         
 
-def performance_contituous_recognition(X,y):
+def performance_continuous_recognition(X,y):
     path="forecsys_data\\juncture"
     sgmtt=ld.load_segmentation(path)
     m=len(sgmtt.get_serie())

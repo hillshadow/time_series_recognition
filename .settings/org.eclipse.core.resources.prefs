@@ -1,5 +1,10 @@
 eclipse.preferences.version=1
+encoding//classification/distribution_visualisation.py=utf-8
+encoding//classification/quality.py=utf-8
+encoding//latex/image_generator.py=utf-8
+encoding//utilities/variables.py=utf-8
 encoding/classifier.py=utf-8
 encoding/comparaison.py=utf-8
 encoding/computation.py=utf-8
+encoding/recognition.py=utf-8
 encoding/temporal_shift.py=utf-8
