@@ -8,8 +8,9 @@ Created on 6 juil. 2017
 import numpy as np
 import matplotlib.pyplot as plt
 from storage import load as ld
-from comparison import build_distance_vector
+from exploitation.featurization import build_features
 from mpl_toolkits.mplot3d import Axes3D
+from plotting import save_or_not
 
 def plot_dynamic_data_components_i_j(X,y,k,j):
     """
@@ -143,7 +144,7 @@ def plot_data_components_i_j(X, y, i, j, save=False, hightlight=None):
         if hightlight==None:
             plt.show()
      
-def plot_data_components_i_j_k(X, y, i, j, k , x_label, y_label, save=False):
+def plot_data_components_i_j_k(X, y, i, j, k, save=False):
     print("Size of the True Classe :", len([e for e in y if e==1]))
     print("Size of the False Classe :", len([e for e in y if e==0]))
     X=np.array([[row[i],row[j], row[k]] for row in X])
@@ -153,32 +154,7 @@ def plot_data_components_i_j_k(X, y, i, j, k , x_label, y_label, save=False):
     ax.scatter(X_true[:, 0], X_true[:, 1], X_true[:,2], color="b", alpha=0.6, label="Walking")#,cmap=plt.cm.bone)s
     ax.scatter(X_false[:, 0], X_false[:, 1], X_false[:,2], color="r", alpha=0.6, label="Other")
     plt.legend()
-    if save:
-        plt.savefig("data\\DistanceVectorComponents\\"+x_label+"_"+y_label)
-        plt.close()
-    else:
-        plt.show()
-
-def plot_with_marker(serie, marker, fin, movement, clf):
-    """
-    Here ? Are you really ?
-    """    
-    fig, ax=plt.subplots()
-    ax.plot(serie) 
-    x=[ x for x in range(0,len(serie))]
-    # Affichage d'une barre verticale � chaque point de rupture
-    for i in range(len(marker)):
-        p=marker[i]
-        f=fin[i]
-        ax.axvspan(p, f, alpha=0.1, color='red')
-        plt.axvline(x=p, linewidth=0.5, color='m')
-        plt.axvline(x=f, linewidth=0.5, color='g')
-    plt.title("Recognition of "+movement+" by "+clf)
-    plt.xlabel("Times (50 Hz)")
-    plt.ylabel("Acceleration (g)")
-#     plt.savefig("report_pictures\\continuous_recognition\\recognition_of_"+movement+"_by_"+clf)
-#     plt.close()
-    plt.show()
+    save_or_not(save,"data\\DistanceVectorComponents\\"+str(i)+"_"+str(j)+"_"+str(k))
 
 def hightlight(X,y,i,j,k,l,z,index):
     plot_data_components_i_j(X, y, i, j, save=False, hightlight=index)
@@ -187,18 +163,21 @@ def hightlight(X,y,i,j,k,l,z,index):
     plot_data_components_i_j(X, y, i, z, save=False, hightlight=index)
     plt.show()
     
-def display_problem(num):
-    sgmtt=ld.load_segmentation("forecsys_data\\juncture")
+def display_problem(num, files_node="\\forecsys_data"):
+    sgmtt=ld.load_segmentation(files_node+"\\step")
     bp=sgmtt.get_breaking_points()
     if num > 198:
         num-=199
-        other_serie=ld.load_serie("forecsys_data\\juncture")
-        serie=ld.load_serie("forecsys_data\\other_classe")
+        other_serie=ld.load_serie(files_node+"\\step")
+        serie=ld.load_serie(files_node+"\\other_classe")
         index=[bp[k]*len(serie)/len(other_serie) for k in range(len(bp)-1)]
     else:
-        serie=ld.load_serie("forecsys_data\\juncture")
+        serie=ld.load_serie(files_node+"\\step")
         index=[bp[k] for k in range(len(bp)-1)]
-    build_distance_vector(index[num],serie,True)
+    templates_library=ld.load(files_node+"\\templates_library.txt")
+    len_max_template=max([len(t) for t in templates_library[:,0]])
+    windows_length = int(len_max_template * (1 + 20.0 / 100))
+    build_features(serie[index[num]:index[num]+windows_length], templates_library, True)
     
     
 def plot_hist_i(X,y,i):

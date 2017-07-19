@@ -1,19 +1,21 @@
 # coding: utf-8
 
 """
-@author: Philippenko
+:author: Philippenko
+:date: June 2017
+
 This class is devoted to the segmentation of a time serie.
-There is also the associated tools for the printing of the segmentation elements.
+There is also the associated tools for printing the segmentation elements.
 """
 
-import matplotlib.pyplot as plt
 from statistics import median
 
 import segmentation_construction as com
 import manual as man
 from storage import save as sv
-from dba import DBA
-    
+from utilities.dba import DBA
+from plotting.plotting import plot_series, plot_series_and_marker, plot_series_superposition
+        
 class Segmentation:
     
     def __init__(self, **keys):
@@ -95,6 +97,9 @@ class Segmentation:
         return(self.absc, self.serie,self.order,self.sd_serie,self.sd_serie,self.breaking_points,
                self.segments, self.average_segment, self.dispersion_segment)
         
+    def set_breaking_points(self,bp):
+        self.breaking_points=bp
+        
     def recompute_average_segment(self, iteration):
         self.segments=com.compute_segments(self.breaking_points, self.serie)
         self.segments=[com.normalization(s) for s in self.segments]
@@ -116,46 +121,32 @@ class Segmentation:
         sv.save_list(self.absc, filepath+"\\time.csv")
         sv.save_list(self.serie, filepath+"\\serie.csv")
         sv.save_list(self.breaking_points, filepath+"\\breaking_points.csv")
-        sv.save_segments(self.segments, filepath+"\\segments.txt")
+        sv.save(self.segments, filepath+"\\segments.txt")
         sv.save_list(self.average_segment,filepath+"\\average_segment.csv")
         sv.save_list(self.dispersion_segment,filepath+"\\dispersion_segment.csv")    
     
     # Affichage de la superposition des segments.
     def plot_segments_superposition(self, filepath,save=True):
-        plt.figure(figsize=(15, 4))
-        for  s in self.segments:
-            plt.plot(s)
-        plt.title("Segments")
-        save_or_not(save, filepath+"\\segments_superposition.png")
+        plot_series_superposition(self.segments, "Segments", filepath+"\\segments_superposition.png", save)
+
         
     def plot_serie(self, filepath,save=True):
-        plt.figure(figsize=(15, 4))
-        plt.plot(self.serie)  
-        plt.title(self.activity)
-        save_or_not(save, filepath+"\\serie.png")
+        plot_series(self.serie,self.activity,filepath+"\\serie.png",save)
         
     def plot_breaking_points(self, filepath,save=True):
-        plt.figure(figsize=(15, 4))
-        plt.plot(self.serie)  
-        plt.title(self.activity)
-        # Affichage d'une barre verticale � chaque point de rupture
-        for p in self.breaking_points:
-            plt.axvline(x=p, linewidth=0.5, color='r')
-        save_or_not(save,filepath+"\\breaking_points.png")
+        plot_series_and_marker(self.serie, self.breaking_points, self.activity, filepath+"\\breaking_points.png", save)
         
-    def plot_smooth_diff(self, filepath,save=True):
-        plt.figure(figsize=(15, 4))
-        plt.plot(self.sd_serie)  
-        plt.title("Smoothing and Differenciation")  
-        plt.savefig(filepath+"\\smooth_diff.png")
+    def plot_smooth_diff(self, filepath, save=True):
+        plot_series(self.sd_serie,"Smoothing and Differenciation",filepath+"\\smooth_diff.png", save)
+
         
     def plot_average_segment(self, filepath,save=True):
-        plt.figure(figsize=(2, 4))
-        plt.plot(self.average_segment)
-        plt.plot([self.average_segment[i]-3*self.dispersion_segment[i] for i in range(len(self.average_segment))],'--r')
-        plt.plot([self.average_segment[i]+3*self.dispersion_segment[i] for i in range(len(self.average_segment))],'--r')
-        plt.title("Average_segment")       
-        save_or_not(save,filepath+"\\average_segment.png") 
+        three_series=[self.average_segment,
+                      [self.average_segment[i]-3*self.dispersion_segment[i] for i in range(len(self.average_segment))],
+                      [self.average_segment[i]+3*self.dispersion_segment[i] for i in range(len(self.average_segment))]]
+        plot_series_superposition(three_series, "Average_segment", 
+                                 filepath+"\\average_segment.png", 
+                                 save, ['-b', '--r', '--r'], figsize=(2,4))
     
     def display_segmentation(self,filepath,save=True):
         self.plot_breaking_points(filepath)
@@ -178,11 +169,3 @@ class Segmentation:
                 print("Distance : ", distance[i])
                 print("Point :", i)
         
-def save_or_not(save,filepath):
-    if save:
-        plt.savefig(filepath)
-        plt.close()
-    else: 
-        plt.show()
-
-

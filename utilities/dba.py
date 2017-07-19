@@ -1,44 +1,54 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
-@author: Philippenko
+:author: Philippenko
+:date: June 2017
 
-This is an implementation of the DBA algorithm presented in:
-A global averaging method for dynamic time warping, with applications to clustering, Petitjean et. al.
-(http://dpt-info.u-strasbg.fr/~fpetitjean/Research/Petitjean2011-PR.pdf)
+This is an implementation of the DBA algorithm.
+
+.. warning:: We have implemented three version of the DTW.
+    
+.. todo:: rigorously compare the three version of the DTW algorithm
+    
+References
+----------
+.. [1] Petitjean et. al., `A global averaging method for dynamic time warping, with applications to clustering <http://dpt-info.u-strasbg.fr/~fpetitjean/Research/Petitjean2011-PR.pdf>`_
 """
 
-from __future__ import absolute_import, division
-import numbers
 import numpy as np
-from collections import defaultdict
-
-try:
-    range = xrange
-except NameError:
-    pass
 
 from scipy.spatial.distance import euclidean
 from statistics import mean, variance
 
+from numpy import array, zeros, argmin, inf, ndim
+from scipy.spatial.distance import cdist
 
-
-def DBA(segments, iter):
-    """
-    Computes the medoid segment of a bunch of segments based on the Petitjean method.
+def DBA(segments, iter, rand=True):
+    """Computes the medoid segment of a bunch of segments based on the Petitjean method.
+    
+    The inititialization could be random (fast) or not (precise).
     
     Parameters
     ----------
-    segments: list of list-like
-        the bunch of segments
-    iter: int-like
-        the number of iterations
+    segments: list of list
+        The bunch of segments.
+    iter: int
+        The number of iterations.
+    
+    Returns
+    -------
+    medoid: list
+        The medoid.
+    w: list
+        The weight of the medoid.
     """
     from random import randint
     init_segments=[segments[i] for i in range(0,len(segments), int(len(segments)/10.0))]
     print("DBA Initialisation with ", len(init_segments), "segments")
-    medoid=initial_medoid(init_segments)#segments[randint(0, len(segments)-1)]
+    if rand:
+        medoid=segments[randint(0, len(segments)-1)]
+    else:
+        medoid=initial_medoid(init_segments)
     print("Iteration :", 0)
     (medoid,w)=DBA_update(medoid,segments)
     for i in range(1,iter):
@@ -47,13 +57,17 @@ def DBA(segments, iter):
     return (medoid,w)
  
 def initial_medoid(segments):
-    """
-    Initializes the medoid by taking the segments with the smallest sum of squares
+    """Initializes the medoid by taking the segments with the smallest sum of squares
     
-    Parameter
-    ---------
+    Parameters
+    ----------
     segments: list of list-like
         the bunch of segments
+    
+    Returns
+    -------
+    medoid: list
+        The initial medoid.
     """
     minSSQ=float("Inf") #Minimum sum of square
     for s1 in segments:
@@ -68,14 +82,20 @@ def initial_medoid(segments):
     return medoid
  
 def DBA_update(medoid,segments):
-    """
-    Updates the medoid.
+    """Updates the medoid.
     
     Parameters
     ----------
-    medoid: list-like
-    segments: list of list-like
-        the bunch of segments
+    medoid: list
+    segments: list of list
+        The bunch of segments
+        
+    Returns
+    -------
+    mean_medoid: list
+        The updated medoid.
+    variance_medoid: list
+        The variance of the updated medoid.
     """
     n=len(medoid)
     nb_segments=len(segments)
@@ -94,22 +114,21 @@ def DBA_update(medoid,segments):
     return ([mean(a) for a in alignment],[variance(a) for a in alignment])
  
 def DTW_multiple_alignment(medoid,s):
-    """
-    Compute the shift for a segment according to the medoid.
+    """Computes the shift for a segment according to the medoid.
     
     This is the first part of the DTW algorithm
     
     Parameters
     ----------
-    medoid: list-like
-    segments: list of list-like
+    medoid: list
+    segments: list of list
         the bunch of segments
         
-    Return
-    ------
-    alignment: list-like
+    Returns
+    -------
+    alignment: list
         the shift for the segment "s" w.r.t the medoid
-    path: list-like of tuplets
+    path: list of tuplets
         the optimal path between the two series
     """
     #Step 1: compute the accumulated cost matrix of DTW
@@ -133,8 +152,7 @@ def DTW_multiple_alignment(medoid,s):
     return (alignment,path)
  
 def DTWCumulMat(medoid, s):
-    """
-    Computes the cost/path matrix of a medoid/segment doublet.
+    """Computes the cost/path matrix of a medoid/segment doublet.
     
     This is the second part of the DTW algorithm
     
@@ -144,8 +162,8 @@ def DTWCumulMat(medoid, s):
     s: list-like
         a segment
         
-    Return
-    ------
+    Returns
+    -------
     cost: matrix
         the accrued weights
     path:  list-like of tuplets
@@ -186,7 +204,8 @@ def DTWCumulMat(medoid, s):
     return (cost,path,weight)
 
 def optimal_path(n,m, path, cost):
-    """
+    """Computes the optimal path of the *DTW*
+    
     Parameters
     ----------
     n: int-like
@@ -198,8 +217,10 @@ def optimal_path(n,m, path, cost):
     path:  list-like of tuplets
         the optimal path between the two series
         
-    Return
-    ------
+    Returns
+    -------
+    the_path: list
+    path_cost: list
     """
     the_path=[]
     path_cost=[]
@@ -228,6 +249,11 @@ def distanceTo(a,b):
     ----------
     a,b: float-like
     
+    Returns
+    -------
+    distance: float
+        the squared distance between a and b
+    
     Examples
     ---------
     >>> distanceTo(0,0)
@@ -237,16 +263,25 @@ def distanceTo(a,b):
     """
     return (a-b)**2   
 
-from numpy import array, zeros, argmin, inf, equal, ndim
-from scipy.spatial.distance import cdist
-
 def dtw(x, y, dist=distanceTo):
-    """
-    Computes Dynamic Time Warping (DTW) of two sequences.
-    :param array x: N1*M array
-    :param array y: N2*M array
-    :param func dist: distance used as cost measure
-    Returns the minimum distance, the cost matrix, the accumulated cost matrix, and the wrap path.
+    """Computes Dynamic Time Warping (DTW) of two sequences.
+    
+    .. warning:: This is another way to write the DTW algorithms. Is this writing faster in Python ?
+    
+    .. todo:: rigorously compare the three version of the DTW algorithm
+    
+    Parameters
+    ----------
+    x: N1*M array
+    y: N2*M array
+    func dist: distance used as cost measure
+    
+    Returns
+    -------
+    minimum distance
+    cost matrix
+    accumulated cost matrix
+    wrap path
     """
     assert len(x)
     assert len(y)
@@ -271,20 +306,32 @@ def dtw(x, y, dist=distanceTo):
     path_weigth=[]
     for i in range(len(path[0])):
         path_weigth.append(C[path[0][i]][path[1][i]])
-    return D1[-1, -1] / sum(D1.shape), C, D1, path, path_weigth
+    return D1[-1, -1], C, D1, path, path_weigth #/ sum(D1.shape)
 
         
 
 def fastdtw(x, y, dist=distanceTo):
-    """
-    Computes Dynamic Time Warping (DTW) of two sequences in a faster way.
+    """Computes Dynamic Time Warping (DTW) of two sequences in a faster way.
     Instead of iterating through each element and calculating each distance,
-    this uses the cdist function from scipy (https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.cdist.html)
-    :param array x: N1*M array
-    :param array y: N2*M array
-    :param string or func dist: distance parameter for cdist. When string is given, cdist uses optimized functions for the distance metrics.
+    this uses the cdist function from `scipy <https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.cdist.html>`_
+    
+     .. warning:: Surprisingly, this version is twice slower than the usual algorithm
+    
+    .. todo:: rigorously compare the three version of the DTW algorithm
+    
+    Parameters
+    ----------
+    x: N1*M array
+    y: N2*M array
+    dist: distance parameter for cdist. When string is given, cdist uses optimized functions for the distance metrics.
     If a string is passed, the distance function can be 'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski', 'yule'.
-    Returns the minimum distance, the cost matrix, the accumulated cost matrix, and the wrap path.
+    
+    Returns
+    -------
+    minimum distance
+    cost matrix
+    accumulated cost matrix
+    wrap path
     """
     x=np.array(x)
     y=np.array(y)
@@ -336,6 +383,10 @@ def _traceback(D):
 from math import sqrt
 
 def LB_Keogh(s1,s2,r):
+    """Implements the LB Keogh lower bound of dynamic time warping.
+    
+    .. seealso:: `Time series similarity by Alex Minnaar <http://alexminnaar.com/time-series-classification-and-clustering-with-python.html>`_
+    """
     LB_sum=0
     for ind,i in enumerate(s1):
         
@@ -348,4 +399,6 @@ def LB_Keogh(s1,s2,r):
             LB_sum=LB_sum+(i-lower_bound)**2
     
     return sqrt(LB_sum)
-     
+    
+    
+    

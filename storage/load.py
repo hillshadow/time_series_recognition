@@ -1,15 +1,16 @@
 # coding: utf-8
 
 """
-@author: Philippenko
+:author: Philippenko
+:date: Juil. 2017
 
 This module is devoted to the loading of our data.
 In particular :
-    1) loads a simple list from a csv file
-    2) loads a list of list of different lengths (for the segments)
-    3) loads a segmentation
-    4) loads a serie and its breaking points
-    6) gets the filename given an activity and a category (test, manuel, automatic)
+    #. loads any type of data saved via the pickle module
+    #. loads a simple list from a csv file
+    #. loads a list of list of different lengths (for the segments)
+    #. loads a serie and its breaking points
+    #. gets the filename given an activity and a category (test, manuel, automatic)
 """
 
 import csv
@@ -22,6 +23,8 @@ def load_list(filename, in_float=True, temps=False):
     """
     Loads a list saved in csv file. The list could be a list of int, float or datetime.datetime
     
+    .. warning:: temps as the priority on in_float ie if the both are true the result will be a time list.
+    
     Parameters
     ----------
     filename: string-like
@@ -31,8 +34,6 @@ def load_list(filename, in_float=True, temps=False):
     temps: boolean-like
         if True the list will be load as datetim.datetime 
         
-    ::warning temps as the priority on in_float ie if the both are true the result will be a time list.
-    
     Return
     ------
     list: list-like
@@ -52,23 +53,23 @@ def load_list(filename, in_float=True, temps=False):
             liste.append(int(row[0]))
     return liste
         
-def load_segments(filename):
+def load(filename):
     """
-    Loads a list saved in txt file using the pickle module. This format is not readable by human.
+    Loads any type of data saved in txt file using the pickle module. This format is not readable by human.
     
     Parameters
     ----------
     filename: string-like
         the name of the file where the list is saved
     
-    Return
-    ------
-    list: list of list-like
-        the wished segments
+    Returns
+    -------
+    data: 
+        the wished data
     """
     with open (filename, 'rb') as fp:
-        segments = pickle.load(fp)
-    return segments
+        data = pickle.load(fp)
+    return data
 
 def load_double_list(filename,temp=False):
     """
@@ -109,35 +110,33 @@ def load_serie(filename):
     """
     Loads a series ie the sub time series defines by its associated breaking points
     
-    ::warning we do not have tested this function with a series indexed with datetime.datetime
+    .. warning:: we do not have tested this function with a series indexed with datetime.datetime
     
     Parameters
     ----------
     filename: string-like
         the name of the file where the list is saved
         
-    Return
-    ------
+    Returns
+    -------
     serie: list-like
         the sub time series
     """
-    #TODO : généraliser le test/manuel/auto
     bp=load_list(filename+"\\breaking_points.csv", in_float=False)
     serie=load_list(filename+"\\serie.csv")
     serie=serie[bp[0]:bp[len(bp)-1]]
     return serie
 
 def load_segmentation(filepath):
-    """
-    Loads a segmentation.
+    """Loads a segmentation.
     
     Parameters
     ----------
-    filename: string-like
+    filename: string
         the name of the file where the list is saved
         
-    Return
-    ------
+    Returns
+    -------
     Segmentation(...): Segmentation-like
         the wished segmentation
     """
@@ -148,24 +147,26 @@ def load_segmentation(filepath):
         absc=[]
     serie=load_list(filepath+"\\serie.csv")
     breaking_points=load_list(filepath+"\\breaking_points.csv",False)
-    segments=load_segments(filepath+"\\segments.txt")
+    segments=load(filepath+"\\segments.txt")
     average_segment=load_list(filepath+"\\average_segment.csv")
     dispersion_segment=load_list(filepath+"\\dispersion_segment.csv")  
     return Segmentation(absc=absc,serie=serie,order="NaN",activity="",sd_serie=[],breaking_points=breaking_points,segments=segments,average_segment=average_segment,dispersion_segment=dispersion_segment)
 
 def get_filename(activity, category):
-    """
-    Gets the appropriate filename (in fact filepath) corresponding to an activity and a category
+    """Gets the appropriate filename (in fact filepath) corresponding to an activity and a category
+    
+    .. warning:: Usable only with the USC data not with the forcsys one.
     
     Parameters
     ----------
-    activity: string-like
+    activity: string
         the activity, for instance WalkingForward
     category: string-like
         the category of the segmentation, for instance manual
     
-    Return:
-    filename: string-like
+    Returns
+    -------
+    filename: string
         the wished path
     """
     path="USC-Activities\\{0}\\".format(activity)

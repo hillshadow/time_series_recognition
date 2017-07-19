@@ -14,8 +14,48 @@ from sklearn.metrics import roc_curve
 from sklearn.model_selection import validation_curve
 from sklearn.model_selection import learning_curve
 
-
-def plot_validation_curve(X,y, clf, param_name, param_range,title="Validation Curve"):
+from plotting import save_or_not
+       
+def plot_confusion_matrix(confusion_matrix, classes=None,
+                          title='Confusion matrix',
+                          cmap=plt.cm.jet, save=True):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if classes==None:
+        classes=[]
+        for i in range(confusion_matrix.shape[0]):
+            classes.append(str(i))
+            
+    thresh = confusion_matrix.max() / 2.
+            
+    if confusion_matrix.shape[0]<5 or confusion_matrix.shape[1]<5:
+        for i, j in itertools.product(range(confusion_matrix.shape[0]), 
+                                      range(confusion_matrix.shape[1])):
+            plt.text(j, i, confusion_matrix[i, j],
+                     horizontalalignment="center",
+                     color="white" if confusion_matrix[i, j] > thresh else "black")
+        cmap=plt.cm.RdYlGn
+            
+    plt.imshow(confusion_matrix, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    
+    if confusion_matrix.shape[0]==2:
+        type_clf="report_pictures\\binary_classification"
+    else:
+        type_clf="report_pictures\\multi_classification"
+    save_or_not(save,type_clf+"\\"+title)
+    
+def plot_validation_curve(X,y, clf, param_name, param_range,
+                          title="Validation Curve",save=True):
     train_scores, test_scores = validation_curve(
         clf, X, y, param_name=param_name, param_range=param_range,
         cv=10, scoring="accuracy", n_jobs=1)
@@ -40,48 +80,7 @@ def plot_validation_curve(X,y, clf, param_name, param_range,title="Validation Cu
                      test_scores_mean + test_scores_std, alpha=0.2,
                      color="navy", lw=lw)
     plt.legend(loc="best")
-    plt.savefig("report_pictures\\validation_curve\\"+title)
-    plt.close()
-    
-       
-def plot_confusion_matrix(confusion_matrix, classes=None,
-                          title='Confusion matrix',
-                          cmap=plt.cm.jet):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
-    
-    if classes==None:
-        classes=[]
-        for i in range(confusion_matrix.shape[0]):
-            classes.append(str(i))
-            
-    thresh = confusion_matrix.max() / 2.
-            
-    if confusion_matrix.shape[0]<5 or confusion_matrix.shape[1]<5:
-        for i, j in itertools.product(range(confusion_matrix.shape[0]), range(confusion_matrix.shape[1])):
-            plt.text(j, i, confusion_matrix[i, j],
-                     horizontalalignment="center",
-                     color="white" if confusion_matrix[i, j] > thresh else "black")
-        cmap=plt.cm.RdYlGn
-            
-    plt.imshow(confusion_matrix, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
-    plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    
-    if confusion_matrix.shape[0]==2:
-        type_clf="report_pictures\\binary_classification"
-    else:
-        type_clf="report_pictures\\multi_classification"
-    plt.savefig(type_clf+"\\"+title)
-    plt.close()
+    save_or_not(save, "report_pictures\\validation_curve\\"+title)    
 
 def plot_learning_curve(clf, title, X, y, ylim=None, cv=None,
                         n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
@@ -101,7 +100,7 @@ def plot_learning_curve(clf, title, X, y, ylim=None, cv=None,
         n_features is the number of features.
 
     y : array-like, shape (n_samples) or (n_samples, n_features), optional
-        Target relative to X for classification or regression;
+        Target relative to X for analyze or regression;
         None for unsupervised learning.
 
     ylim : tuple, shape (ymin, ymax), optional
@@ -152,7 +151,7 @@ def plot_learning_curve(clf, title, X, y, ylim=None, cv=None,
     plt.legend(loc="best")
     return plt
 
-def plot_ROC(X,y,clf):
+def plot_ROC(X,y,clf,save=True):
     predictions=np.array(clf.predict_proba(X))[:,1]
     false_positive_rate, true_positive_rate, thresholds = roc_curve(y, predictions)
     roc_auc = auc(false_positive_rate, true_positive_rate)
@@ -166,8 +165,8 @@ def plot_ROC(X,y,clf):
     plt.ylim([-0.1,1.2])
     plt.ylabel('True Positive Rate')
     plt.xlabel('False Positive Rate')
-    plt.savefig("report_pictures\\binary_classification\\"+title)
-    plt.close()
+    save_or_not(save,"report_pictures\\binary_classification\\"+title)
+
     
     
     

@@ -1,19 +1,29 @@
-'''
-Created on 30 mai 2017
-
-@author: Philippenko
-This module is devoted to the manual selection of the breaking points of a time serie.
-We create a ClickEventSegmentation class so as to use the interactive plot
-'''
-#!/usr/bin/python
 # coding: utf-8
+
+"""
+:author: Philippenko
+:date: June 2017
+
+This module is devoted to the interactive plot
+
+In particular:
+    #. the manual selection of the breaking points of a time series
+    #. the manual construction of a time series
+"""
+
 
 import matplotlib.pyplot as plt
 import datetime
 from matplotlib.dates import num2date
 
+from bisect import bisect_left
+
 
 class ClickEventSegmentation:
+    """
+    This class is devoted to the click event without taking into count the time aspect.
+   
+    """
     
     def __init__(self,ax):
         self.ax=ax
@@ -34,6 +44,10 @@ class ClickEventSegmentation:
         print(self.points)
         
 class ClickEventSegmentationWithTime:
+    """
+    This class is devoted to the click event and take into count the time aspect.
+   
+    """
     
     def __init__(self,ax, temps):
         self.ax=ax
@@ -46,7 +60,7 @@ class ClickEventSegmentationWithTime:
         if event.button==1:
             print("Zoom from", clickX)
         elif event.button==3:
-            true_date=takeClosest(self.temps, clickX)
+            true_date=_takeClosest(self.temps, clickX)
             print(clickX)
             self.points.append(self.temps.index(true_date))
         
@@ -57,6 +71,9 @@ class ClickEventSegmentationWithTime:
         print(self.points)
         
 class ClickEventSeriesBuilding:
+    """
+    This class is devoted to the construction of a time series
+    """
     
     def __init__(self,ax):
         self.ax=ax
@@ -71,22 +88,9 @@ class ClickEventSeriesBuilding:
         return self.points        
 
     def display_points(self):
-        print(self.points)
+        print(self.points)  
 
-
-def manuel_selection_breaking_points(serie): 
-    print("Select the breaking points ...")   
-    print("Only the right click will be considered ...")
-    fig, ax = plt.subplots()
-    ax.plot(serie)
-    c=ClickEventSegmentation(ax)
-    fig.canvas.mpl_connect('button_press_event', c)
-    plt.show()
-    return c.get_point()    
-
-from bisect import bisect_left
-
-def takeClosest(myList, myNumber):
+def _takeClosest(myList, myNumber):
     """
     Assumes myList is sorted. Returns closest value to myNumber.
 
@@ -103,8 +107,44 @@ def takeClosest(myList, myNumber):
         return after
     else:
         return before
+    
+def manuel_selection_breaking_points(serie): 
+    """Create an interactive interfaces so as to select the breaking points of a time series 
+    without taking into count the time aspect.
+    
+    Parameters
+    ----------
+    serie: list
+        the serie to be plotted
+        
+    Returns
+    -------
+    bp: list
+        the breaking points
+    """
+    print("Select the breaking points ...")   
+    print("Only the right click will be considered ...")
+    fig, ax = plt.subplots()
+    ax.plot(serie)
+    c=ClickEventSegmentation(ax)
+    fig.canvas.mpl_connect('button_press_event', c)
+    plt.show()
+    return c.get_point()  
 
 def manuel_selection_breaking_points_with_time(absc, serie): 
+    """Create an interactive interfaces so as to select the breaking points of a time series 
+    and take into count the time aspect.
+    
+    Parameters
+    ----------
+    serie: list
+        the serie to be plotted
+        
+    Returns
+    -------
+    bp: list
+        the breaking points
+    """
     print("Select the breaking points ...")   
     print("Only the right click will be considered ...")
     fig, ax = plt.subplots()
@@ -114,7 +154,19 @@ def manuel_selection_breaking_points_with_time(absc, serie):
     plt.show()
     return c.get_point() 
 
-def manual_time_series_construction(serie):     
+def manual_time_series_construction(serie): 
+    """Create an interactive interfaces so as to manually build a time series.
+    
+    Parameters
+    ----------
+    serie: list
+        the serie to be plotted
+        
+    Returns
+    -------
+    bp: list
+        the breaking points
+    """    
     print("Select the points ... ")   
     fig, ax = plt.subplots()
     ax.plot(serie)
