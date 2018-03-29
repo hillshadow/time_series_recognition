@@ -6,42 +6,42 @@ Hightly depracted !
 from segmentation.segmentation import Segmentation
 from storage import load as ld
 from storage import save as sv
-from comparison import compare, distance_optimum
+from exploitation.featurization import compare, distance_optimum
 from segmentation.segmentation_construction import normalization
 import matplotlib.pyplot as plt
 import os.path
 from statistics import mean, variance
 
 
-activities=["WalkingForward","WalkingLeft","WalkingRight","WalkingUpstairs",
+classes=["WalkingForward","WalkingLeft","WalkingRight","WalkingUpstairs",
             "WalkingDownstairs","RunningForward","JumpingUp","Sitting","Standing",
             "Sleeping","ElevatorUp","ElevatorDown"]
 
 def recognize_all_series(deb=0, fin=1000, automatic=True):
     print("Recognize All Series")
     for i in range(12):
-        print("#### \t Pattern :",activities[i]) 
+        print("#### \t Pattern :",classes[i]) 
         if automatic:
-            template_path="USC-Activities\\{0}\\automatic".format(activities[i])
+            template_path="USC-Activities\\{0}\\automatic".format(classes[i])
         else:
-            template_path="USC-Activities\\{0}\\manual".format(activities[i])
+            template_path="USC-Activities\\{0}\\manual".format(classes[i])
         for j in range(12):
-            print("## \t Activity :",activities[j]) 
-            serie_path="USC-Activities\\{0}\\SSQserie.csv".format(activities[j])
+            print("## \t Activity :",classes[j]) 
+            serie_path="USC-Activities\\{0}\\SSQserie.csv".format(classes[j])
             (serie,marker)=recognize_two_series(template_path, serie_path)
-            save_plot_recognition(marker, serie, activities[i], activities[j])
+            save_plot_recognition(marker, serie, classes[i], classes[j])
             
             #performance_recognition(template_path,serie_path,i)
             
 def recognize_itself(automatic=True):     
     for i in range(12):
         if automatic:
-            template_path="USC-Activities\\{0}\\automatic".format(activities[i])
+            template_path="USC-Activities\\{0}\\automatic".format(classes[i])
         else:
-            template_path="USC-Activities\\{0}\\manual".format(activities[i])
-        serie_path="USC-Activities\\{0}\\SSQserie.csv".format(activities[i])
+            template_path="USC-Activities\\{0}\\manual".format(classes[i])
+        serie_path="USC-Activities\\{0}\\SSQserie.csv".format(classes[i])
         (serie,marker)=recognize_two_series(template_path, serie_path)
-        save_plot_recognition(marker, serie, activities[i], activities[i])
+        save_plot_recognition(marker, serie, classes[i], classes[i])
         
             
 def recognize_two_series(template_path, serie_path):
@@ -76,7 +76,7 @@ def save_plot_recognition(marker, serie, act1, act2, save=False):
         
 def recognize(template_path, serie_path, num_template, num_serie, threshold=0, automatic=True):   
     (serie,marker)=recognize_two_series(template_path, serie_path)
-    save_plot_recognition(marker, serie, activities[num_template], activities[num_serie], save=False)
+    save_plot_recognition(marker, serie, classes[num_template], classes[num_serie], save=False)
     return len(marker)
 
 def performance_recognition_one_vs_one(i,j,automatic=True):
@@ -84,17 +84,17 @@ def performance_recognition_one_vs_one(i,j,automatic=True):
     This function serve to compute the recognition statistics for a given template i, 
     and a given time series j.
     The statistics are built with regards to the test\info.txt document which 
-    summarize which activities and how many elementary movements of the activity 
+    summarize which classes and how many elementary movements of the activity 
     should be detected.
     """
-    serie_path="USC-Activities\\{0}\\test".format(activities[j])
+    serie_path="USC-Activities\\{0}\\test".format(classes[j])
     true_rows=ld.load_list(serie_path+"\\info.csv", in_float=False)
     if automatic:
-        template_path="USC-Activities\\{0}\\automatic".format(activities[i])
+        template_path="USC-Activities\\{0}\\automatic".format(classes[i])
     else:
-        template_path="USC-Activities\\{0}\\manual".format(activities[i])
+        template_path="USC-Activities\\{0}\\manual".format(classes[i])
     recognized=recognize(template_path, serie_path, i, j, automatic=False)
-    print("Template :", activities[i], ", Recognized serie :", activities[j], "detected : ", recognized, ", in reality : ", true_rows[i])
+    print("Template :", classes[i], ", Recognized serie :", classes[j], "detected : ", recognized, ", in reality : ", true_rows[i])
     return recognized
 
 def individual_performance_recognition(j, automatic=True):
@@ -102,18 +102,18 @@ def individual_performance_recognition(j, automatic=True):
     This function serve to compute the recognition statistics of each template
     for a given activity.
     The statistics are built with regards to the test\info.txt document which 
-    summarize which activities and how many elementary movements of the activity 
+    summarize which classes and how many elementary movements of the activity 
     should be detected.
     """
-    print("### Activity : ", activities[j])
-    serie_path="USC-Activities\\{0}\\test".format(activities[j])
+    print("### Activity : ", classes[j])
+    serie_path="USC-Activities\\{0}\\test".format(classes[j])
     true_rows=ld.load_list(serie_path+"\\info.csv", in_float=False)
-    recognized=[0 for act in activities]
-    for i in range(len(activities)):
+    recognized=[0 for act in classes]
+    for i in range(len(classes)):
         recognized[i]=performance_recognition_one_vs_one(i, j, automatic)
    
-    for i in range(len(activities)): 
-        print("Template :", activities[i], ", Recognized serie :", activities[j], "detected : ", recognized[i], ", in reality : ", true_rows[i])
+    for i in range(len(classes)): 
+        print("Template :", classes[i], ", Recognized serie :", classes[j], "detected : ", recognized[i], ", in reality : ", true_rows[i])
     sv.save_double_list(recognized, true_rows, serie_path+"rec_info.csv")
 
 def global_performance_recognition(automatic=True):
@@ -121,16 +121,16 @@ def global_performance_recognition(automatic=True):
     This function serve to compute the recognition statistics 
     of each template/activity
     The statistics are built with regards to the test\info.txt document which 
-    summarize which activities and how many elementary movements of the activity 
+    summarize which classes and how many elementary movements of the activity 
     should be detected.
     """
     # For each test series ...
-    for j in range(len(activities)):
+    for j in range(len(classes)):
         individual_performance_recognition(j, automatic)
 
 # TODO : to improve  
 def compute_threshold(i,automatic=True):
-    path="USC-Activities\\{0}\\manual".format(activities[i])
+    path="USC-Activities\\{0}\\manual".format(classes[i])
     sgmtt=ld.load_segmentation(path)
     (serie,marker)=recognize_two_series(path, path, 0)
     marker=sorted(marker)
@@ -147,7 +147,7 @@ def compute_threshold(i,automatic=True):
     recognize(path, path, i, i, threshold, automatic)
     
 def print_distance_at_bp(i,automatic=True):
-    path="USC-Activities\\{0}\\manual".format(activities[i])
+    path="USC-Activities\\{0}\\manual".format(classes[i])
     template=ld.load_list(path+"\\average_segment.csv")
     template_variance=ld.load_list(path+"\\dispersion_segment.csv")
     longueur_fenetre=len(template)
@@ -159,7 +159,7 @@ def print_distance_at_bp(i,automatic=True):
         print("At bp", bp[i], ": ", dist)
         
 def auto_recognition(i, threshold, automatic=True):
-    path=ld.get_filename(activities[i], automatic)
+    path=ld.get_filename(classes[i], automatic)
     recognize(path, path, i, i, threshold, automatic)
 
     

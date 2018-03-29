@@ -96,7 +96,7 @@ def plot_series_and_marker(series, marker, title, filepath, save):
         plt.axvline(x=p, linewidth=0.5, color='r')
     save_or_not(save,filepath)
                 
-def plot_recognition(serie, start_marker, end_marker, movement, clf,save=True): 
+def plot_recognition(serie, start_marker, end_marker, movement, clf, save=True, mono_classe=None): 
     fig, ax=plt.subplots()
     ax.plot(serie) 
     x=[x for x in range(0,len(serie))]
@@ -110,7 +110,11 @@ def plot_recognition(serie, start_marker, end_marker, movement, clf,save=True):
     plt.title("Recognition of "+movement+" by "+clf)
     plt.xlabel("Times (50 Hz)")
     plt.ylabel("Acceleration (g)")
-    save_or_not(save,"report_pictures\\continuous_recognition\\recognition_of_"+movement+"_by_"+clf)
+    if mono_classe is None:
+        save_or_not(save,"report_pictures\\continuous_recognition\\recognition_of_"+movement+"_by_"+clf)
+    else:
+        save_or_not(save,"report_pictures\\continuous_recognition\\recognition_of_"+mono_classe
+                    +"_with_"+movement+"_by_"+clf)
     
  
 

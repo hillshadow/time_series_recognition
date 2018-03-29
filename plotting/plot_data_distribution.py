@@ -1,15 +1,17 @@
 # coding: utf-8
 '''
-Created on 6 juil. 2017
+:author: Philippenko
+:date: Juil. 2017
 
-@author: Philippenko
+This module is devoted to the plotting of the data's distribution.
 '''      
 
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 from storage import load as ld
 from exploitation.featurization import build_features
-from mpl_toolkits.mplot3d import Axes3D
 from plotting import save_or_not
 
 def plot_dynamic_data_components_i_j(X,y,k,j):

@@ -68,6 +68,8 @@ def select_number_features(rates, combinaisons=None, my_classifiers=classifiers)
             if combinaisons is None:
                 print("Features Numbers : ", r.index(the_max))
             else:
+                print(combinaisons)
+                print(r.index(the_max))
                 print("Features Numbers : ", combinaisons[r.index(the_max)])
             print("The associated score : ", the_max)
             features_numbers.append(r.index(the_max)+1)
@@ -256,7 +258,8 @@ def features_selection(X,y, save=True):
     principal_component_analyse(X,y, save)
     select_from_model(X,y)
 
-def quality_by_grouped_features(X,y, quality_func=quality_of_the_prediction, my_classifiers=[classifiers[4]]): 
+def quality_by_grouped_features(X,y, quality_func=quality_of_the_prediction, my_classifiers=[classifiers[4]], 
+                                iteration=1, save=False): 
     """Carry out an analyze of a given set of features and display it.
     
     The users need to pre-registered the features combination set, then the score are computed for each classifiers
@@ -277,7 +280,13 @@ def quality_by_grouped_features(X,y, quality_func=quality_of_the_prediction, my_
         The function which compute the quality of a classification. Default : quality_of_the_prediction
     my_classifiers: a list of classifier, optional
         The set of classifiers on which the score will be computed. So as to carry out a comparison.
-        Default : [classifiers[4]] ie RandomForest.
+        default : [classifiers[4]] ie RandomForest.
+    iteration: int, optional
+        default : 1
+        Number of iterations of the quality function. At the end the average score is returned.
+    save: boolean, optional
+        default : True
+        If True then the picture is saved, else it is dislpayed on the screen.
     
     Returns
     -------
@@ -292,7 +301,6 @@ def quality_by_grouped_features(X,y, quality_func=quality_of_the_prediction, my_
                                 "fft0","Re(fft1)","Im(fft1)","dispersion"])
     combinaisons=[[0,1,3,4],[2,5],[6,7,8,9],[0,1,2,3,4,5],[2,5,6,7,8,9],[0,1,3,4,6,7,8,9],[0,1,2,3,4,5,6,7,8,9]]
     mean_rates=None
-    iteration=1
     for k in range(iteration):
         print("Iteration "+str(k))
         rates=[[] for clf in my_classifiers]
@@ -300,11 +308,11 @@ def quality_by_grouped_features(X,y, quality_func=quality_of_the_prediction, my_
             subX=df.iloc[:, comb].as_matrix()
             for c in range(len(my_classifiers)):
                 clf=my_classifiers[c]
-                quality=quality_func(subX, y, clf, index=comb, second_kind=True)
+                quality=quality_func(subX, y, clf, index=comb, second_kind=True, save=save)
                 rates[c-1].append([q for q in quality])
         mean_rates=add_matrices(mean_rates, rates)
     mean_rates=transform_matrice(mean_rates, iteration)
-    features_numbers=select_number_features(mean_rates, my_classifiers)
+    features_numbers=select_number_features(mean_rates, my_classifiers=my_classifiers)
     print(features_numbers)
     plot_grouped_bar(combinaisons, features_numbers, my_classifiers, mean_rates)   
     return mean_rates, features_numbers

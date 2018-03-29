@@ -39,6 +39,10 @@ range_clf_parameters=[[np.linspace(0.1,10,50)], [], [np.linspace(1,10,10, dtype=
                       [np.linspace(1,20,20, dtype=int), np.linspace(1,20,20, dtype=int), np.linspace(1,20,20, dtype=int), np.linspace(1,9,9, dtype=int), np.linspace(2,20,19, dtype=int)],
                       [np.linspace(0.1,10,50)]]
 
-classifiers=[svm.LinearSVC(dual=False),GaussianNB(),neighbors.KNeighborsClassifier(n_neighbors=2),
-             tree.DecisionTreeClassifier(min_samples_leaf=4,max_depth=15),
-             RandomForestClassifier(min_samples_leaf=4,max_depth=10,random_state=1), LogisticRegression()]
+classifiers=[svm.LinearSVC(dual=False),GaussianNB(),neighbors.KNeighborsClassifier(n_neighbors=1,p=1),
+             tree.DecisionTreeClassifier(min_samples_leaf=2,max_depth=12),
+             RandomForestClassifier(min_samples_leaf=1,max_depth=11,random_state=1, n_estimators=12), LogisticRegression()]
+
+
+
+

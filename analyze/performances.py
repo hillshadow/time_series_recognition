@@ -32,7 +32,7 @@ def performance_continuous_recognition(files_node, classes, clf):
     for clf in classifiers:
         print("Classifier :"+str(clf))
         serie=ld.load_list(path+"\\serie.csv")
-        recognized_true.append(len(continuous_recognition(serie, 0, m, files_node,classes, clf)))
+        recognized_true.append(len(continuous_recognition(serie, 0, m, files_node,classes=classes, clf=clf)))
     for r in recognized_true:
         print("In reality :", n, ", recognized :",r, " ie recognition rate :", float(r)/n*100, "%")
          

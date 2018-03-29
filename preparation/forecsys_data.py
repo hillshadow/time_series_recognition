@@ -221,6 +221,7 @@ def compute_data_features(files_node, classes):
         for k in range(len(bp)-1):
             print("Number : ",k)
             X.append(build_features(serie[bp[k]:bp[k]+windows_length], templates_library, False))
+            import matplotlib.pyplot as plt
             y.append(i)
     end = time()
     print("Execution time :", end-start)

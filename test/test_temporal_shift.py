@@ -1,11 +1,11 @@
 # coding: utf-8
-from shift import temporal_shift as sft
+from exploitation.shift import temporal_shift as sft
 
 from math import sin,cos,pi
-from storage.load import load_list, load_segments
-from segmentation_construction import normalization
+from storage.load import load_list, load
+from segmentation.segmentation_construction import normalization
 
-from utilities.variables import activities
+from utilities.variables import classes
 
 def template(x):
     if 0<x<2*pi:
@@ -75,7 +75,7 @@ def exemple_speed_variations():
     show()
     
     (w0,w1,w2,w3)=(0,1,0,1.1)
-    print("Premier exemple : pas de décalage, par contre plus rapide")
+    print("Deuxième exemple : pas de décalage, par contre plus rapide")
     X_grand=arange(-1,2,0.1)
     plot([template(x) for x in X],label="original")
     plot([deformation(x,w0,w1,w2,w3) for x in X_grand], label="deformation")
@@ -96,20 +96,17 @@ def clean_example(w2=1,w3=-1):
     plot([my_deformation(x) for x in X_serie], label="Serie")
     legend()
     show()   
-    (w2,w3,score_min,rising_too_strong, tray_too_long)=sft.compute_temporel_shift_parameters(
-        [template(x) for x in X_template], [my_deformation(x) for x in X_serie],plot=True)
+    sft.compute_temporel_shift_parameters([template(x) for x in X_template], [my_deformation(x) for x in X_serie],plot=True)
     
 def plot_all_example_path(template):
-    from lostorage.loadmport load_list
     list_name=["test_serie"+str(i) for i in range(1,7)]
     list_series=[load_list(l) for l in list_name]
     for s in list_series:
-        (w2,w3,score_min,rising_too_strong, tray_too_long)=sft.compute_temporel_shift_parameters(
-            template, s,plot=True)
+        sft.compute_temporel_shift_parameters(template, s,plot=True)
         
 def compute_w2_w3_for_template_i_serie_j(i,j,start=10):
-    template=load_list("USC-Activities\\{0}\\manual\\average_segment.csv".format(activities[i]))
-    serie=load_list("USC-Activities\\{0}\\SSQserieTotale.csv".format(activities[j]))[start:180+start]
+    template=load_list("USC-Activities\\{0}\\manual\\average_segment.csv".format(classes[i]))
+    serie=load_list("USC-Activities\\{0}\\SSQserieTotale.csv".format(classes[j]))[start:180+start]
 
     sft.compute_temporel_shift_parameters(template, normalization(serie), True)    
     

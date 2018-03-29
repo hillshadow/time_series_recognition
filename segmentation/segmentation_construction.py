@@ -1,5 +1,12 @@
 # coding: utf-8
 
+"""
+:author: Philippenko
+:date: Juil. 2017
+
+This module is devoted to the manipulation and construction of objects of type Segmentation.
+"""
+
 import statistics as stat
 from scipy.signal import argrelextrema
 import numpy as np
@@ -12,10 +19,15 @@ def smoothing(y, j):
     
     Parameters 
     ----------
-    y : list-like
+    y : list
         the time serie to be smoothed
-    j : int-like
+    j : int
         the smoothing order
+        
+    Returns
+    -------
+    m: list
+        the smoothed time series
         
     Examples 
     ----------
@@ -122,8 +134,7 @@ def preparation(y, j):
 
 # The first and the last points are included in the breaking points set.
 def compute_breaking_points(y, d):
-    """
-    Return the breaking points of a serie considering it smoothed and differentiated serie
+    """Returns the breaking points of a serie considering it smoothed and differentiated serie
     
     Parameters
     ----------
@@ -199,8 +210,7 @@ def next_minimum(pos,mins):
     return next[0]
 
 def prev_minimum(pos,mins):
-    """
-    Return the nearest previous minimum of a given position
+    """Returns the nearest previous minimum of a given position
     
     Parameters
     ----------
@@ -229,8 +239,8 @@ def prev_minimum(pos,mins):
 
 
 def compute_segments(points,serie):
-    '''
-    Return all the sub-segments of a serie given the breaking points.
+    '''Returns all the sub-segments of a serie given the breaking points.
+    
     There will be p-1 segments returned, where p is the length of the breaking points set.
     
     Parameters
@@ -316,8 +326,7 @@ def selection_relevant_points(points):
     return points
 
 def remove(idx, points, moy, var):
-    """
-    Remove a breaking points.
+    """Remove a breaking points.
     
     Parameters
     ----------
@@ -336,8 +345,7 @@ def remove(idx, points, moy, var):
         return remove_best_points(points, idx, moy, var)
         
 def remove_best_points(points, idx, moy, var):
-    """
-    Remove the best breaking points with regards to the statistical properties of the 
+    """Remove the best breaking points with regards to the statistical properties of the 
     breaking points set.
     
     Parameters

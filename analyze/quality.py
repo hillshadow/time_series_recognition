@@ -98,7 +98,7 @@ def KFold_validation_confusion_matrix(X,y, clf, n_split=3, index=None, second_ki
     return np.array( [ [np.mean([d[j,i] for d in my_cms]) for i in range(my_cms[0].shape[0]) ] 
                       for j in range(my_cms[0].shape[1]) ] )
     
-def KFold_AUC(X,y,clf,n_split=3, index=None, second_kind=False):
+def KFold_AUC(X,y,clf,n_split=3, index=None, second_kind=False, save=False):
     """Computes the k-Fold AUC. 
     
     That is to say, it carry out a k-fold partition of the data and compute 2*k AUC.
@@ -117,6 +117,8 @@ def KFold_AUC(X,y,clf,n_split=3, index=None, second_kind=False):
     index: list of integer, useless
         Added only to match to the definition of a quality function and to be easily useable.
     second_kind: boolean, useless
+        Added only to match to the definition of a quality function and to be easily useable.
+    save: boolean, useless
         Added only to match to the definition of a quality function and to be easily useable.
         
     Returns
@@ -148,7 +150,7 @@ def quality_of_the_prediction(X,y,clf=classifiers[4], iteration=1, second_kind=T
     Notes
     -----
     It's very hard to compute properly an accurate measure of the quality of a classifier's prediction and
-    to define ane *official* quality.
+    to define an *official* quality.
         - Which criterion to choose ? 
         - On what data set apply it ? 
         - In which context this measure is relevant ?
@@ -192,10 +194,11 @@ def quality_of_the_prediction(X,y,clf=classifiers[4], iteration=1, second_kind=T
     
     files_node="forecsys_data"
     classes=["step","other_classe"]
+
     
-    if (X is None) and (y is None):
-        X,y=compute_data_features(files_node, classes)
-        
+#     if (X is None) and (y is None):
+#         X,y=compute_data_features(files_node, classes)
+
     # We take the first half part of the steps and all the non-step segments for the train dataset
     number_train_steps=int(0.5*len([y[i] for i in range(len(y)) if y[i]==0]))
     y_train=[y[i] for i in range(len(y)) if y[i]==1 or 
@@ -214,7 +217,9 @@ def quality_of_the_prediction(X,y,clf=classifiers[4], iteration=1, second_kind=T
     for i in range(iteration):
         np.random.seed(seed=10+i*100)
         clf.fit(X_train, y_train)
-        recognized_segments = continuous_recognition(sgmtt.get_serie(), deb, fin, files_node, classes, clf, index=index, save=save)
+#         clf.fit(X,y)
+        recognized_segments = continuous_recognition(sgmtt.get_serie(), deb, fin, files_node, classes, 
+                                                     mono_class=classes[0], clf=clf, index=index, save=save)
         marker=recognized_segments_are_true_segments(true_segments,recognized_segments)
         TP=len([marker[i] for i in range(len(marker)) if marker[i]==1])
         precisions.append(TP/float(len(marker)))
@@ -227,10 +232,11 @@ def quality_of_the_prediction(X,y,clf=classifiers[4], iteration=1, second_kind=T
         path="forecsys_data\\other_classe"
         sgmtt=ld.load_segmentation(path)
         deb=0
-#         fin=len(sgmtt.get_serie())
-        (deb, fin)=(0, 50)
-        continuous_recognition(sgmtt.get_serie(), deb, fin, files_node, classes, clf, index=index)
-        false_rate=len(continuous_recognition(sgmtt.get_serie(), deb, fin, files_node, classes, clf, index=index, save=save))*t/float(fin)
+        fin=len(sgmtt.get_serie())
+        marker=continuous_recognition(sgmtt.get_serie(), deb, fin, files_node, classes,mono_class=classes[1],
+                                       clf=clf, index=index, save=save)
+        print(marker.shape[1])
+        false_rate=marker.shape[1]*t/float(fin)
     
     precision=np.mean(precisions)
     recall=np.mean(recalls)
@@ -268,9 +274,6 @@ def recognized_segments_are_true_segments(true_segments, recognized_segments):
     segment, one has to carry out a comparison on each of the still not recognized segment.
     """
     copy_true_segments=deepcopy(true_segments)     
-    print("true_segment=", true_segments)
-    print("recognized_segments=", recognized_segments)          
-    print("Marking")
     marker=[]
     recognized_segments=recognized_segments[0]
     for r in recognized_segments:
@@ -284,7 +287,6 @@ def recognized_segments_are_true_segments(true_segments, recognized_segments):
             i+=1
         if to_be_continued==True:
             marker.append(False)
-    print("marker=",marker)
             
     assert len(marker)==len(recognized_segments), "The number of marks and of recognized segments are not equal !"
     return marker

@@ -6,7 +6,7 @@ Created on 29 juin 2017
 
 from storage import load as ld
 from time import time
-from dba import DTWCumulMat, optimal_path, fastdtw, dtw, distanceTo
+from utilities.dba import DTWCumulMat, optimal_path, fastdtw, dtw, distanceTo
 
 def test_vitesse_dtw():
     pattern=ld.load_list("test_pattern2")

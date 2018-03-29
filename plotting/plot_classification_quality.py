@@ -1,8 +1,9 @@
 # coding: utf-8
 '''
-Created on 6 juil. 2017
+:author: Philippenko
+:date: Juil. 2017
 
-@author: Philippenko
+This module is devoted to the plotting of the classification's quality.
 '''
 import itertools
 import numpy as np

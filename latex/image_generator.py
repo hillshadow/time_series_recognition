@@ -6,9 +6,9 @@ Created on 7 juil. 2017
 @author: Philippenko
 '''
 
-from storage.load import load_segments, load_double_list, load_serie, load_list
-from classifier import classifiers
-from utilities.variables import activities
+from storage.load import load, load_double_list, load_serie, load_list
+from analyze.performances import classifiers
+from utilities.variables import classes
 
 def write_CV_image_including(clf_type="binary"):
     slide=""
@@ -43,7 +43,7 @@ def write_tables_CV_recap():
     my_types=["binary", "multi"]
     for k in range(len(my_types)):
         clf_type=my_types[k]
-        rates=load_segments("docs//performances//"+clf_type+"_rates.txt")
+        rates=load("docs//performances//"+clf_type+"_rates.txt")
         
         col_def="|"
         for i in range(rates.shape[1]+1):
@@ -57,7 +57,7 @@ def write_tables_CV_recap():
         if rates.shape[0]==2:
             the_activities=["Step", "Not Step"]
         else:
-            the_activities=activities[:rates.shape[0]]
+            the_activities=classes[:rates.shape[0]]
         for i in range(rates.shape[0]):
             sub_lines=the_activities[i]+" (\%) & "
             for j in range(rates.shape[1]):
@@ -85,7 +85,7 @@ def write_tables_CV_recap():
             
             \medskip
             
-            At the first glance, the results looks like to be very poor for the multi-classes classification with almost all 
+            At the first glance, the results looks like to be very poor for the multi-classes analyze with almost all 
             rates below 65\%. 
             
             \medskip

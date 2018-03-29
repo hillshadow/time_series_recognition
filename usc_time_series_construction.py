@@ -9,7 +9,7 @@
 
 This script has been written so has to prepare the USC data.
 That means : 
-    1) gathering the time series by activities
+    1) gathering the time series by classes
     2) computing the SSQ series
     3) save the just computed SSQ serie in the appropriate file
      under the name USC-Activities\The_Activity\SSQserie.csv
@@ -21,19 +21,19 @@ import pandas as pd
 import mat4py as mat
 from save import save_list  
 
-activities=["WalkingForward","WalkingLeft","WalkingRight","WalkingUpstairs",
+classes=["WalkingForward","WalkingLeft","WalkingRight","WalkingUpstairs",
             "WalkingDownstairs","RunningForward","JumpingUp","Sitting","Standing",
             "Sleeping","ElevatorUp","ElevatorDown"]
 
-def prepare_data():   
+def data_preparation():   
     
     start = timer()
     print("#### \t Starting ! ")  
     
-    # For all the activities:
+    # For all the classes:
     for j in range(12):
         data=pd.DataFrame({})
-        print("###### Activity : ", activities[j])
+        print("###### Activity : ", classes[j])
         # For the 14 subjects
         for i in range(1,15):
             print("### Sujet ", i)
@@ -52,10 +52,10 @@ def prepare_data():
         data["SSQ"]=col
 
         serie=list(data["SSQ"])
-        save_list(serie,"USC-Activities\{0}\SSQserieTotale.csv".format(activities[j]))
+        save_list(serie,"USC-Activities\{0}\SSQserieTotale.csv".format(classes[j]))
     
     end=timer()
     print("Run time : ", start-end)
         
 if __name__ == '__main__':
-    prepare_data()
+    data_preparation()

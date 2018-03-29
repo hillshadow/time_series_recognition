@@ -12,11 +12,24 @@ from statistics import median
 
 import segmentation_construction as com
 import manual as man
-from storage import save as sv
+import storage.save as sv
 from utilities.dba import DBA
 from plotting.plotting import plot_series, plot_series_and_marker, plot_series_superposition
         
 class Segmentation:
+    """
+    A segmentation is an object which gathers the major information of a time series constituted by action
+    of a a single class.
+        #. the points of the time series
+        #. the order (optional) : this information is depracated and is useful only when the segmentation is 
+        done automatically.
+        #. the name of the class (optional)
+        #. the time abscisse (optional) : only when the time aspect is important
+        #. the breaking points
+        #. the segments of the time series
+        #. the average segment (optional)
+        #. the dispersion segment (optional)
+    """
     
     def __init__(self, **keys):
         if 'segments' in keys: self.loading(**keys)
