@@ -48,6 +48,9 @@ To carry out the time series recognition we carried out a classification based o
 
 ## Conclusion
 
+This method has been applied to human activities recognition. At the present time, the quality of our method in not better, nor worse than the existing algorithms. However, our algorithm is far to be optimized nor achieved. It remains a lot of issues to be fixed, in particular with the spatial shift which was not yet correctly implemented. 
+Thus, one can expect a very high accuracy when managing to fully and rightly implement the algorithm. Unfortunately, on the contrary of the previous approaches, our solution is very costly in time. The computation is very long and in the actual state, the recognition could not be done in real time. However, our solution has been designed is as such manner that it could be very easily parallelized. Therefore, one expects to manage to speed up the algorithm so as to allow a real time recognition of a streamed time series.
+
 # Software architecture
 
 The code is splited is 7 packages : 
